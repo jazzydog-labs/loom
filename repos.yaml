@@ -33,4 +33,8 @@ repos:
 
 - name: panorama
   url: https://github.com/jazzydog-labs/panorama.git
-  path: $DEV_ROOT/$FOUNDRY_DIR/panorama 
+  path: $DEV_ROOT/$FOUNDRY_DIR/panorama
+
+- name: riverrun
+  url: https://github.com/jazzydog-labs/riverrun.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/riverrun 
