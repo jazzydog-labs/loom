@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import os
 
 from .config import ConfigManager
 from .git import GitManager
@@ -172,26 +173,115 @@ class RepoManager:
         
         return results
     
-    def get_detailed_status(self) -> Dict[str, str]:
-        """Get detailed git status for all repositories using git status --short --branch --show-stash."""
+    def get_detailed_status(self) -> Dict[str, Dict[str, str]]:
+        """Get detailed git status and diff statistics for all repositories."""
         repo_paths = self.get_repo_paths()
         results = {}
         
         for name, path in repo_paths.items():
             path_obj = Path(path)
             if path_obj.exists() and self.git.is_git_repo(path_obj):
+                # Get status
                 success, stdout, stderr = self.git.execute_command(
                     path_obj, 
                     ["git", "status", "--short", "--branch", "--show-stash"]
                 )
                 if success:
-                    results[name] = stdout
+                    # Get diff statistics for modified files
+                    diff_stats = self._get_diff_statistics(path_obj)
+                    results[name] = {
+                        "status": stdout,
+                        "diff_stats": diff_stats
+                    }
                 else:
-                    results[name] = f"Error: {stderr}"
+                    results[name] = {
+                        "status": f"Error: {stderr}",
+                        "diff_stats": {}
+                    }
             else:
-                results[name] = "Repository not found or not a git repository"
+                results[name] = {
+                    "status": "Repository not found or not a git repository",
+                    "diff_stats": {}
+                }
         
         return results
+    
+    def _get_diff_statistics(self, path: Path) -> Dict[str, str]:
+        """Get diff statistics for modified files in a repository."""
+        diff_stats = {}
+        
+        # Get list of modified files
+        success, stdout, stderr = self.git.execute_command(
+            path, 
+            ["git", "diff", "--name-only"]
+        )
+        if not success:
+            return diff_stats
+        
+        modified_files = [f.strip() for f in stdout.split('\n') if f.strip()]
+        
+        # Get diff statistics for each modified file
+        for file_path in modified_files:
+            success, stdout, stderr = self.git.execute_command(
+                path, 
+                ["git", "diff", "--stat", file_path]
+            )
+            if success and stdout.strip():
+                # Parse the stat line (last line contains the summary)
+                lines = stdout.strip().split('\n')
+                if lines:
+                    stat_line = lines[-1]
+                    # Extract added/removed lines from stat line
+                    # Format: " 1 file changed, 2 insertions(+), 1 deletion(-)"
+                    import re
+                    match = re.search(r'(\d+) insertions?\(\+\), (\d+) deletions?\(-\)', stat_line)
+                    if match:
+                        added = match.group(1)
+                        removed = match.group(2)
+                        diff_stats[file_path] = f"+{added} -{removed}"
+        
+        # Also scan for new directories and files that aren't tracked by git
+        new_items = self._scan_new_directories(path)
+        for item_path in new_items:
+            diff_stats[item_path] = "NEW_DIR"
+        
+        return diff_stats
+    
+    def _scan_new_directories(self, path: Path) -> List[str]:
+        """Scan for new directories and files that aren't tracked by git."""
+        new_items = []
+        
+        # Get list of all tracked files
+        success, stdout, stderr = self.git.execute_command(
+            path, 
+            ["git", "ls-files"]
+        )
+        if not success:
+            return new_items
+        
+        tracked_files = set(f.strip() for f in stdout.split('\n') if f.strip())
+        
+        # Walk through the repository directory
+        for root, dirs, files in os.walk(path):
+            # Skip .git directory
+            if '.git' in root:
+                continue
+            
+            # Get relative path from repo root
+            rel_root = os.path.relpath(root, path)
+            if rel_root == '.':
+                rel_root = ''
+            
+            # Check files (we'll handle directories by their files)
+            for file_name in files:
+                if file_name.startswith('.'):
+                    continue  # Skip hidden files
+                
+                file_path = os.path.join(rel_root, file_name) if rel_root else file_name
+                if file_path not in tracked_files:
+                    new_items.append(file_path)
+        
+        return new_items
     
     def bootstrap_foundry(self, dev_root: str) -> bool:
         """Run the foundry-bootstrap setup."""
