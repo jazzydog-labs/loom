@@ -495,8 +495,180 @@ def display_detailed_status(details: dict):
                 print("")
 
 
-# Add commands to the app
+# Create a separate app for the 'do' commands
 if RICH_AVAILABLE:
+    do_app = typer.Typer(help="Run a named operation in all repositories (e.g., test, build, docs, git, etc)")
+    
+    @do_app.command()
+    def add():
+        """Run the 'add' operation in all repositories. (Example: add files, dependencies, etc)"""
+        console.print("Running 'add' operation in all repositories...")
+        # This is a placeholder for a generic add operation. In a real implementation, this could add files, dependencies, etc.
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Running add...", total=None)
+            results = repo_manager.add_all_files()  # This currently adds all files via git, but could be extended.
+            progress.update(task, description="✅ Add operation completed")
+        
+        # Display results
+        table = Table(title="Add Operation Results")
+        table.add_column("Repository", style="cyan")
+        table.add_column("Success", style="magenta")
+        table.add_column("Output", style="green")
+        table.add_column("Error", style="red")
+        
+        for name, (success, stdout, stderr) in results.items():
+            success_text = "✅" if success else "❌"
+            color = "green" if success else "red"
+            table.add_row(
+                name,
+                f"[{color}]{success_text}[/{color}]",
+                stdout[:100] + "..." if len(stdout) > 100 else stdout,
+                stderr[:100] + "..." if len(stderr) > 100 else stderr
+            )
+        
+        console.print(table)
+
+    @do_app.command()
+    def commit(
+        message: str = typer.Argument(..., help="Commit message")
+    ):
+        """Run the 'commit' operation in all repositories. (Example: commit changes, checkpoint, etc)"""
+        console.print(f"Running 'commit' operation in all repositories with message: {message}")
+        # This is a placeholder for a generic commit operation. In a real implementation, this could commit changes, checkpoint, etc.
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Running commit...", total=None)
+            results = repo_manager.commit_all(message)  # This currently commits via git, but could be extended.
+            progress.update(task, description="✅ Commit operation completed")
+        
+        # Display results
+        table = Table(title="Commit Operation Results")
+        table.add_column("Repository", style="cyan")
+        table.add_column("Success", style="magenta")
+        table.add_column("Output", style="green")
+        table.add_column("Error", style="red")
+        
+        for name, (success, stdout, stderr) in results.items():
+            success_text = "✅" if success else "❌"
+            color = "green" if success else "red"
+            table.add_row(
+                name,
+                f"[{color}]{success_text}[/{color}]",
+                stdout[:100] + "..." if len(stdout) > 100 else stdout,
+                stderr[:100] + "..." if len(stderr) > 100 else stderr
+            )
+        
+        console.print(table)
+
+    @do_app.command()
+    def push():
+        """Run the 'push' operation in all repositories. (Example: push changes, publish, etc)"""
+        console.print("Running 'push' operation in all repositories...")
+        # This is a placeholder for a generic push operation. In a real implementation, this could push changes, publish, etc.
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Running push...", total=None)
+            results = repo_manager.push_all()  # This currently pushes via git, but could be extended.
+            progress.update(task, description="✅ Push operation completed")
+        
+        # Display results
+        table = Table(title="Push Operation Results")
+        table.add_column("Repository", style="cyan")
+        table.add_column("Success", style="magenta")
+        table.add_column("Output", style="green")
+        table.add_column("Error", style="red")
+        
+        for name, (success, stdout, stderr) in results.items():
+            success_text = "✅" if success else "❌"
+            color = "green" if success else "red"
+            table.add_row(
+                name,
+                f"[{color}]{success_text}[/{color}]",
+                stdout[:100] + "..." if len(stdout) > 100 else stdout,
+                stderr[:100] + "..." if len(stderr) > 100 else stderr
+            )
+        
+        console.print(table)
+
+    @do_app.command()
+    def pull():
+        """Run the 'pull' operation in all repositories. (Example: pull changes, sync, etc)"""
+        console.print("Running 'pull' operation in all repositories...")
+        # This is a placeholder for a generic pull operation. In a real implementation, this could pull changes, sync, etc.
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Running pull...", total=None)
+            results = repo_manager.pull_all()  # This currently pulls via git, but could be extended.
+            progress.update(task, description="✅ Pull operation completed")
+        
+        # Display results
+        table = Table(title="Pull Operation Results")
+        table.add_column("Repository", style="cyan")
+        table.add_column("Success", style="magenta")
+        table.add_column("Output", style="green")
+        table.add_column("Error", style="red")
+        
+        for name, (success, stdout, stderr) in results.items():
+            success_text = "✅" if success else "❌"
+            color = "green" if success else "red"
+            table.add_row(
+                name,
+                f"[{color}]{success_text}[/{color}]",
+                stdout[:100] + "..." if len(stdout) > 100 else stdout,
+                stderr[:100] + "..." if len(stderr) > 100 else stderr
+            )
+        
+        console.print(table)
+
+    @do_app.command()
+    def status():
+        """Run the 'status' operation in all repositories. (Example: check status, health, etc)"""
+        console.print("Running 'status' operation in all repositories...")
+        # This is a placeholder for a generic status operation. In a real implementation, this could check status, health, etc.
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Running status...", total=None)
+            results = repo_manager.status_all()  # This currently checks git status, but could be extended.
+            progress.update(task, description="✅ Status operation completed")
+        
+        # Display results
+        table = Table(title="Status Operation Results")
+        table.add_column("Repository", style="cyan")
+        table.add_column("Success", style="magenta")
+        table.add_column("Output", style="green")
+        table.add_column("Error", style="red")
+        
+        for name, (success, stdout, stderr) in results.items():
+            success_text = "✅" if success else "❌"
+            color = "green" if success else "red"
+            table.add_row(
+                name,
+                f"[{color}]{success_text}[/{color}]",
+                stdout[:100] + "..." if len(stdout) > 100 else stdout,
+                stderr[:100] + "..." if len(stderr) > 100 else stderr
+            )
+        
+        console.print(table)
+
+    # Add the do app as a subcommand
+    app.add_typer(do_app, name="do")
+
     @app.command()
     def init(
         dev_root: Optional[str] = typer.Option(None, "--dev-root", "-d", help="Development root directory"),
@@ -539,14 +711,14 @@ if RICH_AVAILABLE:
         console.print("All repositories have been cloned and organized.")
 
     @app.command()
-    def pull():
+    def pull_all():
         """Pull latest changes for all repositories."""
         console.print("Pulling repositories...")
         results = repo_manager.pull_all_repos()
         display_pull_results(results)
 
     @app.command()
-    def status():
+    def status_all():
         """Show status of all repositories."""
         show_status()
 

@@ -349,4 +349,41 @@ class RepoManager:
                 
         except Exception as e:
             logger.error(f"Error running bootstrap: {e}")
-            return False 
+            return False
+    
+    def add_all_files(self) -> Dict[str, Tuple[bool, str, str]]:
+        """Add all files in all repositories."""
+        return self._execute_git_command_in_all_repos(["add", "--all"])
+    
+    def commit_all(self, message: str) -> Dict[str, Tuple[bool, str, str]]:
+        """Commit all changes in all repositories with the given message."""
+        return self._execute_git_command_in_all_repos(["commit", "-m", message])
+    
+    def push_all(self) -> Dict[str, Tuple[bool, str, str]]:
+        """Push all repositories."""
+        return self._execute_git_command_in_all_repos(["push"])
+    
+    def pull_all(self) -> Dict[str, Tuple[bool, str, str]]:
+        """Pull all repositories."""
+        return self._execute_git_command_in_all_repos(["pull"])
+    
+    def status_all(self) -> Dict[str, Tuple[bool, str, str]]:
+        """Get status of all repositories."""
+        return self._execute_git_command_in_all_repos(["status", "--short"])
+    
+    def _execute_git_command_in_all_repos(self, git_args: List[str]) -> Dict[str, Tuple[bool, str, str]]:
+        """Execute a git command in all repositories."""
+        results = {}
+        repo_paths = self.get_repo_paths()
+        
+        for name, path in repo_paths.items():
+            path_obj = Path(path)
+            if path_obj.exists():
+                # Run git command directly in the repository directory
+                git_command = ["git"] + git_args
+                success, stdout, stderr = self.git.execute_command(path_obj, git_command)
+                results[name] = (success, stdout, stderr)
+            else:
+                results[name] = (False, "", f"Repository not found: {path}")
+        
+        return results 
