@@ -12,6 +12,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.prompt import Prompt, Confirm
 import io
 import contextlib
+import json
 
 # Initialize rich console
 console = Console()
@@ -447,6 +448,205 @@ def status_all():
 def details():
     """Show detailed git status for all repositories."""
     show_details()
+
+@app.command()
+def go(
+    repo_name: Optional[str] = typer.Argument(None, help="Repository name to enter directly"),
+    output_command: bool = typer.Option(False, "--output-command", "-o", help="Output only the cd command")
+):
+    """Enter a repository with context loaded."""
+    from fuzzywuzzy import fuzz, process
+    import subprocess
+    
+    # Get all repository names
+    repo_names = list(repo_manager.get_repo_paths().keys())
+    
+    if not repo_names:
+        if output_command:
+            print("echo 'No repositories found'")
+        else:
+            print(json.dumps({
+                "error": "No repositories found",
+                "directory": None,
+                "message": None,
+                "context": None
+            }))
+        return
+    
+    selected_repo = None
+    
+    # If repo name provided directly, use fuzzy matching
+    if repo_name:
+        # Use fuzzy matching to find the best match
+        best_match = process.extractOne(repo_name, repo_names, scorer=fuzz.ratio)
+        if best_match and best_match[1] >= 60:  # Threshold for fuzzy matching
+            selected_repo = best_match[0]
+        else:
+            if output_command:
+                print(f"echo 'Repository {repo_name} not found'")
+            else:
+                print(json.dumps({
+                    "error": f"Repository '{repo_name}' not found",
+                    "directory": None,
+                    "message": None,
+                    "context": None
+                }))
+            return
+    else:
+        # Use fzf for interactive fuzzy selection
+        try:
+            # Check if fzf is available
+            subprocess.run(["fzf", "--version"], capture_output=True, check=True)
+            
+            # Create the fzf command
+            fzf_cmd = ["fzf", "--prompt", "Select repository: ", "--height", "40%"]
+            
+            # Run fzf with repository names as input
+            result = subprocess.run(
+                fzf_cmd,
+                input="\n".join(repo_names),
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0 and result.stdout.strip():
+                selected_repo = result.stdout.strip()
+            else:
+                # User cancelled fzf
+                return
+                
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print(json.dumps({
+                "error": "fzf is not installed. Please run foundry-bootstrap/bootstrap.sh to install all dependencies.",
+                "directory": None,
+                "message": None,
+                "context": None
+            }))
+            return
+    
+    # Get repo path
+    repo_paths = repo_manager.get_repo_paths()
+    repo_path = repo_paths[selected_repo]
+    
+    # Get repository context
+    context = get_repo_context(selected_repo, repo_path)
+    
+    if output_command:
+        # Just output the cd command for sourcing
+        print(f"cd {repo_path}")
+        return
+    else:
+        # Output JSON with context
+        result = {
+            "directory": repo_path,
+            "message": context.get("message", "Project is active and ready for development"),
+            "context": context.get("context", "Repository loaded successfully")
+        }
+        print(json.dumps(result, indent=2))
+        return
+
+
+def get_repo_context(repo_name: str, repo_path: str) -> dict:
+    """Get context information for a repository."""
+    try:
+        repo_path_obj = Path(repo_path)
+        if not repo_path_obj.exists():
+            return {
+                "message": "Repository directory not found",
+                "context": "Path does not exist"
+            }
+        
+        # Get git status
+        success, stdout, stderr = repo_manager.git.execute_command(
+            repo_path_obj, 
+            ["git", "status", "--porcelain", "--branch"]
+        )
+        
+        if not success:
+            return {
+                "message": "Repository is not a git repository",
+                "context": "Git status unavailable"
+            }
+        
+        # Parse git status for context
+        lines = stdout.strip().split('\n')
+        if not lines:
+            return {
+                "message": "Repository is clean and ready",
+                "context": "No uncommitted changes"
+            }
+        
+        # Parse branch info
+        branch_info = ""
+        ahead_behind = ""
+        for line in lines:
+            if line.startswith('##'):
+                # Extract branch and ahead/behind info
+                if '...' in line:
+                    parts = line[3:].split('...')
+                    current_branch = parts[0].strip()
+                    upstream_branch = parts[1].split()[0].strip()
+                    branch_info = f"Branch: {current_branch} → {upstream_branch}"
+                    
+                    # Extract ahead/behind
+                    if '[' in line and ']' in line:
+                        start = line.find('[')
+                        end = line.find(']')
+                        ahead_behind = line[start+1:end]
+                else:
+                    current_branch = line[3:].strip()
+                    branch_info = f"Branch: {current_branch}"
+                break
+        
+        # Count changes
+        staged_files = 0
+        unstaged_files = 0
+        untracked_files = 0
+        
+        for line in lines[1:]:  # Skip branch line
+            if line.startswith('A ') or line.startswith('M ') or line.startswith('D '):
+                staged_files += 1
+            elif line.startswith(' M') or line.startswith(' D'):
+                unstaged_files += 1
+            elif line.startswith('??'):
+                untracked_files += 1
+        
+        # Build context message
+        context_parts = []
+        if branch_info:
+            context_parts.append(branch_info)
+        if ahead_behind:
+            context_parts.append(ahead_behind)
+        
+        change_summary = []
+        if staged_files > 0:
+            change_summary.append(f"{staged_files} staged")
+        if unstaged_files > 0:
+            change_summary.append(f"{unstaged_files} modified")
+        if untracked_files > 0:
+            change_summary.append(f"{untracked_files} untracked")
+        
+        if change_summary:
+            context_parts.append(f"Changes: {', '.join(change_summary)}")
+        
+        context = " | ".join(context_parts) if context_parts else "Repository loaded successfully"
+        
+        # Build message
+        if staged_files == 0 and unstaged_files == 0 and untracked_files == 0:
+            message = "Project is clean and ready for development"
+        else:
+            message = f"Project has {staged_files + unstaged_files + untracked_files} pending changes"
+        
+        return {
+            "message": message,
+            "context": context
+        }
+        
+    except Exception as e:
+        return {
+            "message": "Error getting repository context",
+            "context": str(e)
+        }
 
 if __name__ == "__main__":
     main() 
