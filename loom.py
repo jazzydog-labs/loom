@@ -140,7 +140,7 @@ def display_detailed_status(details: dict):
     def parse_status_line(line):
         # Returns (emoji, code, filename, color)
         if line.startswith('##'):
-            return ("🌿", "BRANCH", line, "blue")
+            return (None, "BRANCH", line, "blue")
         elif line.startswith('A '):
             return ("✓", "A", line[2:].strip(), "green")
         elif line.startswith('M '):
@@ -175,19 +175,29 @@ def display_detailed_status(details: dict):
             console.print("=" * (len(name) + 2))
             if output.strip():
                 lines = output.strip().split('\n')
-                for line in lines:
-                    emoji, code, rest, color = parse_status_line(line)
-                    if code == "BRANCH":
-                        console.print(f"[blue]{rest}[/blue]")
-                    elif code == "STASH":
-                        console.print(f"[blue]{emoji} {rest}[/blue]")
-                    elif code:
-                        # Align columns: emoji, code, filename
-                        console.print(f"[{color}]{emoji:<2} {code:<3} {rest}[/]")
-                    else:
-                        console.print(rest)
+                # Check if only branch line is present (clean repo)
+                nonempty_lines = [l for l in lines if l.strip()]
+                if len(nonempty_lines) == 1 and nonempty_lines[0].startswith('##'):
+                    # Only branch line, so print it and the sparkly message
+                    console.print(f"[blue]{nonempty_lines[0]}[/blue]")
+                    console.print("[green]✨ ✨ ✨ Clean repository ✨ ✨ ✨[/green]")
+                else:
+                    has_changes = False
+                    for line in lines:
+                        emoji, code, rest, color = parse_status_line(line)
+                        if code == "BRANCH":
+                            console.print(f"[blue]{rest}[/blue]")
+                        elif code == "STASH":
+                            console.print(f"[blue]{emoji} {rest}[/blue]")
+                        elif code:
+                            console.print(f"[{color}]{emoji:<2} {code:<3} {rest}[/]")
+                            has_changes = True
+                        else:
+                            console.print(rest)
+                    if not has_changes:
+                        console.print("[green]✨ ✨ ✨ Clean repository ✨ ✨ ✨[/green]")
             else:
-                console.print("[dim]✨ No changes[/dim]")
+                console.print("[green]✨ ✨ ✨ Clean repository ✨ ✨ ✨[/green]")
     else:
         repo_names = list(details.keys())
         for idx, (name, output) in enumerate(details.items()):
@@ -197,18 +207,27 @@ def display_detailed_status(details: dict):
             print("=" * (len(name) + 2))
             if output.strip():
                 lines = output.strip().split('\n')
-                for line in lines:
-                    emoji, code, rest, color = parse_status_line(line)
-                    if code == "BRANCH":
-                        print(f"🌿 {rest}")
-                    elif code == "STASH":
-                        print(f"📦 {rest}")
-                    elif code:
-                        print(f"{emoji:<2} {code:<3} {rest}")
-                    else:
-                        print(rest)
+                nonempty_lines = [l for l in lines if l.strip()]
+                if len(nonempty_lines) == 1 and nonempty_lines[0].startswith('##'):
+                    print(f"{nonempty_lines[0]}")
+                    print("✨ ✨ ✨ Clean repository ✨ ✨ ✨")
+                else:
+                    has_changes = False
+                    for line in lines:
+                        emoji, code, rest, color = parse_status_line(line)
+                        if code == "BRANCH":
+                            print(f"{rest}")
+                        elif code == "STASH":
+                            print(f"📦 {rest}")
+                        elif code:
+                            print(f"{emoji:<2} {code:<3} {rest}")
+                            has_changes = True
+                        else:
+                            print(rest)
+                    if not has_changes:
+                        print("✨ ✨ ✨ Clean repository ✨ ✨ ✨")
             else:
-                print("✨ No changes")
+                print("✨ ✨ ✨ Clean repository ✨ ✨ ✨")
 
 
 if RICH_AVAILABLE:
