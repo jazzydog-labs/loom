@@ -44,18 +44,18 @@ CFG = {
     'folder': '📁',
     'dir_sep': '❯',
     'root': '.',
-    'added': '✓',
-    'modified': '●',
-    'deleted': '✗',
-    'renamed': '↔',
+    'added': '✨',
+    'modified': '✏️',
+    'deleted': '🗑️',
+    'renamed': '🔄',
     'copied': '📋',
-    'unmerged': '⚠',
-    'untracked': '?',
-    'ignored': '!',
+    'unmerged': '⚠️',
+    'untracked': '❓',
+    'ignored': '🚫',
     'stash': '📦',
     'clean': '✨',
     'branch': '🌿',
-    'file_circle': '○',
+    'file_circle': '🖊️',
     'success': '✅',
     'warning': '⚠️',
     'error': '❌',
@@ -166,7 +166,11 @@ def display_detailed_status(details: dict):
         elif line.startswith('A '):
             return (CFG['added'], "A", line[2:].strip(), "green")
         elif line.startswith('M '):
-            return (CFG['modified'], "M", line[2:].strip(), "yellow")
+            return (CFG['file_circle'], "M", line[2:].strip(), "yellow")  # Staged
+        elif line.startswith('MM'):
+            return (CFG['file_circle'], "MM", line[2:].strip(), "yellow")  # Both staged and unstaged
+        elif line.startswith(' M'):
+            return (CFG['modified'], " M", line[2:].strip(), "yellow")  # Unstaged only
         elif line.startswith(' D'):
             return (CFG['deleted'], "D", line[2:].strip(), "red")
         elif line.startswith('R '):
@@ -175,10 +179,6 @@ def display_detailed_status(details: dict):
             return (CFG['copied'], "C", line[2:].strip(), "cyan")
         elif line.startswith('U '):
             return (CFG['unmerged'], "U", line[2:].strip(), "red")
-        elif line.startswith(' M'):
-            return (CFG['file_circle'], "M", line[2:].strip(), "yellow")
-        elif line.startswith(' D'):
-            return (CFG['file_circle'], "D", line[2:].strip(), "red")
         elif line.startswith('??'):
             return (CFG['untracked'], "??", line[2:].strip(), "white")
         elif line.startswith('!!'):
@@ -188,20 +188,6 @@ def display_detailed_status(details: dict):
         else:
             return ("", "", line, None)
     
-    def scan_directory_contents(path: Path, dir_path: str) -> List[tuple]:
-        """Scan a directory and return all files with their paths."""
-        import os
-        files = []
-        full_dir_path = path / dir_path
-        if full_dir_path.exists() and full_dir_path.is_dir():
-            for root, dirs, filenames in os.walk(full_dir_path):
-                for filename in filenames:
-                    if filename.startswith('.'):
-                        continue
-                    rel_path = os.path.relpath(os.path.join(root, filename), path)
-                    files.append((rel_path, "??", "NEW_DIR", "?"))
-        return files
-
     def get_max_filename_length(details):
         """Calculate the maximum filename length across all repositories for alignment."""
         max_length = 0
@@ -278,25 +264,27 @@ def display_detailed_status(details: dict):
                             stash_info.append(f"{CFG['stash']} {rest}")
                         elif code and code not in ["BRANCH", "STASH"]:
                             # Group files by directory
-                            if rest.endswith('/'):
-                                # This is a directory entry, scan its contents
-                                if name is None:
-                                    continue
-                                repo_path = Path(str(repo_manager.get_dev_root() or "")) / str(repo_manager.config.get_foundry_dir() or "") / str(name or "")
-                                dir_files = scan_directory_contents(repo_path, rest[:-1])  # Remove trailing slash
-                                for file_path, file_code, file_diff_stat, file_emoji in dir_files:
-                                    # Handle nested directories - use full path
-                                    if "/" in file_path:
-                                        dir_tree_key = file_path.rsplit("/", 1)[0]  # Get full directory path
-                                        if dir_tree_key not in files_by_dir:
-                                            files_by_dir[dir_tree_key] = []
-                                        files_by_dir[dir_tree_key].append((file_path, file_code, file_diff_stat, file_emoji))
-                                    else:
-                                        if "" not in files_by_dir:
-                                            files_by_dir[""] = []
-                                        files_by_dir[""].append((file_path, file_code, file_diff_stat, file_emoji))
+                            if code == "MM":
+                                # File has both staged and unstaged changes - show twice
+                                if "/" in rest:
+                                    dir_tree_key = rest.rsplit("/", 1)[0]
+                                    if dir_tree_key not in files_by_dir:
+                                        files_by_dir[dir_tree_key] = []
+                                    # Add staged version (pen)
+                                    diff_stat = diff_stats.get(rest, "")
+                                    files_by_dir[dir_tree_key].append((rest, "M", diff_stat, CFG['file_circle']))
+                                    # Add unstaged version (pencil)
+                                    files_by_dir[dir_tree_key].append((rest, " M", diff_stat, CFG['modified']))
+                                else:
+                                    if "" not in files_by_dir:
+                                        files_by_dir[""] = []
+                                    # Add staged version (pen)
+                                    diff_stat = diff_stats.get(rest, "")
+                                    files_by_dir[""].append((rest, "M", diff_stat, CFG['file_circle']))
+                                    # Add unstaged version (pencil)
+                                    files_by_dir[""].append((rest, " M", diff_stat, CFG['modified']))
                             else:
-                                # Regular file
+                                # Regular file handling
                                 if "/" in rest:
                                     # Handle nested directories - use full path
                                     dir_tree_key = rest.rsplit("/", 1)[0]  # Get full directory path
@@ -353,6 +341,24 @@ def display_detailed_status(details: dict):
                         for filename, code, diff_stat, emoji in dir_tree[dir_path]:
                             display_name = filename.split("/")[-1] if "/" in filename else filename
                             diff_info = ""
+                            if diff_stat:
+                                # Color the diff stats based on file status
+                                if code == "A":
+                                    # Added files - show in green
+                                    diff_info = f" [green]{diff_stat}[/green]"
+                                else:
+                                    # Modified files - color the parts
+                                    parts = diff_stat.replace("|", "").split()
+                                    colored_parts = []
+                                    for part in parts:
+                                        if part.startswith("+"):
+                                            colored_parts.append(f"[green]{part}[/green]")
+                                        elif part.startswith("-"):
+                                            colored_parts.append(f"[red]{part}[/red]")
+                                        else:
+                                            colored_parts.append(part)
+                                    colored_stats = " ".join(colored_parts)
+                                    diff_info = f" {colored_stats}"
                             file_parts.append(f"{emoji} {display_name}{diff_info}")
                         
                         # Compose the line, wrap if too long
@@ -428,25 +434,27 @@ def display_detailed_status(details: dict):
                             stash_info.append(f"{CFG['stash']} {rest}")
                         elif code and code not in ["BRANCH", "STASH"]:
                             # Group files by directory
-                            if rest.endswith('/'):
-                                # This is a directory entry, scan its contents
-                                if name is None:
-                                    continue
-                                repo_path = Path(str(repo_manager.get_dev_root() or "")) / str(repo_manager.config.get_foundry_dir() or "") / str(name or "")
-                                dir_files = scan_directory_contents(repo_path, rest[:-1])  # Remove trailing slash
-                                for file_path, file_code, file_diff_stat, file_emoji in dir_files:
-                                    # Handle nested directories - use full path
-                                    if "/" in file_path:
-                                        dir_tree_key = file_path.rsplit("/", 1)[0]  # Get full directory path
-                                        if dir_tree_key not in files_by_dir:
-                                            files_by_dir[dir_tree_key] = []
-                                        files_by_dir[dir_tree_key].append((file_path, file_code, file_diff_stat, file_emoji))
-                                    else:
-                                        if "" not in files_by_dir:
-                                            files_by_dir[""] = []
-                                        files_by_dir[""].append((file_path, file_code, file_diff_stat, file_emoji))
+                            if code == "MM":
+                                # File has both staged and unstaged changes - show twice
+                                if "/" in rest:
+                                    dir_tree_key = rest.rsplit("/", 1)[0]
+                                    if dir_tree_key not in files_by_dir:
+                                        files_by_dir[dir_tree_key] = []
+                                    # Add staged version (pen)
+                                    diff_stat = diff_stats.get(rest, "")
+                                    files_by_dir[dir_tree_key].append((rest, "M", diff_stat, CFG['file_circle']))
+                                    # Add unstaged version (pencil)
+                                    files_by_dir[dir_tree_key].append((rest, " M", diff_stat, CFG['modified']))
+                                else:
+                                    if "" not in files_by_dir:
+                                        files_by_dir[""] = []
+                                    # Add staged version (pen)
+                                    diff_stat = diff_stats.get(rest, "")
+                                    files_by_dir[""].append((rest, "M", diff_stat, CFG['file_circle']))
+                                    # Add unstaged version (pencil)
+                                    files_by_dir[""].append((rest, " M", diff_stat, CFG['modified']))
                             else:
-                                # Regular file
+                                # Regular file handling
                                 if "/" in rest:
                                     # Handle nested directories - use full path
                                     dir_tree_key = rest.rsplit("/", 1)[0]  # Get full directory path
@@ -503,6 +511,24 @@ def display_detailed_status(details: dict):
                         for filename, code, diff_stat, emoji in dir_tree[dir_path]:
                             display_name = filename.split("/")[-1] if "/" in filename else filename
                             diff_info = ""
+                            if diff_stat:
+                                # Color the diff stats based on file status
+                                if code == "A":
+                                    # Added files - show in green
+                                    diff_info = f" [green]{diff_stat}[/green]"
+                                else:
+                                    # Modified files - color the parts
+                                    parts = diff_stat.replace("|", "").split()
+                                    colored_parts = []
+                                    for part in parts:
+                                        if part.startswith("+"):
+                                            colored_parts.append(f"[green]{part}[/green]")
+                                        elif part.startswith("-"):
+                                            colored_parts.append(f"[red]{part}[/red]")
+                                        else:
+                                            colored_parts.append(part)
+                                    colored_stats = " ".join(colored_parts)
+                                    diff_info = f" {colored_stats}"
                             file_parts.append(f"{emoji} {display_name}{diff_info}")
                         
                         # Compose the line, wrap if too long
@@ -610,14 +636,29 @@ if RICH_AVAILABLE:
     @app.command()
     def details():
         """Show detailed git status for all repositories."""
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console
-        ) as progress:
-            task = progress.add_task("Getting detailed status...", total=None)
-            details = repo_manager.get_detailed_status()
-            progress.update(task, description="✅ Detailed status completed")
+        if RICH_AVAILABLE:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console
+            ) as progress:
+                task = progress.add_task("Getting detailed status...", total=None)
+                
+                # Get all repository names
+                repo_names = list(repo_manager.get_repo_paths().keys())
+                details = {}
+                
+                for name in repo_names:
+                    details[name] = repo_manager.get_detailed_status(name)
+                
+                progress.update(task, description="✅ Detailed status completed")
+        else:
+            # Get all repository names
+            repo_names = list(repo_manager.get_repo_paths().keys())
+            details = {}
+            
+            for name in repo_names:
+                details[name] = repo_manager.get_detailed_status(name)
         
         display_detailed_status(details)
 
@@ -707,8 +748,13 @@ else:
         display_status_table(statuses)
 
     def details_command(args):
-        print("Getting detailed repository status...")
-        details = repo_manager.get_detailed_status()
+        # Get all repository names
+        repo_names = list(repo_manager.get_repo_paths().keys())
+        details = {}
+        
+        for name in repo_names:
+            details[name] = repo_manager.get_detailed_status(name)
+        
         display_detailed_status(details)
 
     def exec_command(args):

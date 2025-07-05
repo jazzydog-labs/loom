@@ -173,38 +173,69 @@ class RepoManager:
         
         return results
     
-    def get_detailed_status(self) -> Dict[str, Dict[str, str]]:
-        """Get detailed git status and diff statistics for all repositories."""
-        repo_paths = self.get_repo_paths()
-        results = {}
+    def get_detailed_status(self, repo_name: str) -> dict:
+        """Get detailed git status for a repository."""
+        dev_root = self.get_dev_root() or ""
+        foundry_dir = self.config.get_foundry_dir() or ""
+        repo_path = Path(dev_root) / foundry_dir / repo_name
         
-        for name, path in repo_paths.items():
-            path_obj = Path(path)
-            if path_obj.exists() and self.git.is_git_repo(path_obj):
-                # Get status
-                success, stdout, stderr = self.git.execute_command(
-                    path_obj, 
-                    ["git", "status", "--short", "--branch", "--show-stash"]
-                )
-                if success:
-                    # Get diff statistics for modified files
-                    diff_stats = self._get_diff_statistics(path_obj)
-                    results[name] = {
-                        "status": stdout,
-                        "diff_stats": diff_stats
-                    }
-                else:
-                    results[name] = {
-                        "status": f"Error: {stderr}",
-                        "diff_stats": {}
-                    }
-            else:
-                results[name] = {
-                    "status": "Repository not found or not a git repository",
-                    "diff_stats": {}
-                }
+        if not repo_path.exists():
+            return {"status": f"Repository not found: {repo_path}", "diff_stats": {}}
         
-        return results
+        # Get detailed status with untracked files
+        success, stdout, stderr = self.git.execute_command(
+            repo_path, 
+            ["git", "status", "--short", "--branch", "-uall"]
+        )
+        
+        if not success:
+            return {"status": f"Error getting status: {stderr}", "diff_stats": {}}
+        
+        # Get diff statistics for modified and added files
+        diff_stats = {}
+        if stdout.strip():
+            lines = stdout.strip().split('\n')
+            for line in lines:
+                if line.startswith('##'):
+                    continue  # Skip branch info
+                parts = line.split()
+                if len(parts) >= 2:
+                    status_code = parts[0]
+                    filename = parts[1]
+                    if status_code in ['M', 'MM', 'A', 'D', 'R']:
+                        # Get diff stats for this file
+                        if status_code == 'A':
+                            # For added files, use --stat to show lines added
+                            diff_success, diff_stdout, diff_stderr = self.git.execute_command(
+                                repo_path,
+                                ["git", "diff", "--cached", "--stat", filename]
+                            )
+                        else:
+                            # For modified files, use regular diff
+                            diff_success, diff_stdout, diff_stderr = self.git.execute_command(
+                                repo_path,
+                                ["git", "diff", "--stat", filename]
+                            )
+                        if diff_success and diff_stdout.strip():
+                            # Parse the last line which contains the stats
+                            diff_lines = diff_stdout.strip().split('\n')
+                            if diff_lines:
+                                last_line = diff_lines[-1]
+                                # Extract just the line counts (e.g., "2 insertions(+), 1 deletion(-)" -> "+2 -1")
+                                import re
+                                insertions = re.search(r'(\d+) insertion', last_line)
+                                deletions = re.search(r'(\d+) deletion', last_line)
+                                
+                                stats_parts = []
+                                if insertions:
+                                    stats_parts.append(f"+{insertions.group(1)}")
+                                if deletions:
+                                    stats_parts.append(f"-{deletions.group(1)}")
+                                
+                                if stats_parts:
+                                    diff_stats[filename] = " ".join(stats_parts)
+        
+        return {"status": stdout, "diff_stats": diff_stats}
     
     def _get_diff_statistics(self, path: Path) -> Dict[str, str]:
         """Get diff statistics for modified files in a repository."""
