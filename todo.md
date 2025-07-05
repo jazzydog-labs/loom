@@ -1,0 +1,1 @@
+- remove RICH_AVAILABLE

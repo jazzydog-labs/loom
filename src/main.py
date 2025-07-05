@@ -112,7 +112,6 @@ def show_status():
     statuses = repo_manager.get_all_status()
     display_status_table(statuses)
 
-
 def show_details():
     """Show detailed status of all repositories."""
     # Get all repository names
@@ -278,13 +277,53 @@ def display_detailed_status(details: dict):
         return max_length
     
     def parse_branch_info(branch_line):
-        # Example: '## main...origin/main' or '## main' or '## HEAD (no branch)'
-        if '...' in branch_line:
-            current, upstream = branch_line[3:].split('...')
+        # Example: '## main...origin/main [ahead 1]' or '## main' or '## HEAD (no branch)'
+        # Remove the ahead/behind part first
+        clean_line = branch_line
+        if '[' in branch_line and ']' in branch_line:
+            start = branch_line.find('[')
+            clean_line = branch_line[:start].strip()
+        
+        if '...' in clean_line:
+            current, upstream = clean_line[3:].split('...')
             return current.strip(), upstream.strip()
         else:
-            current = branch_line[3:].strip()
+            current = clean_line[3:].strip()
             return current, None
+    
+    def parse_ahead_behind(branch_line):
+        if '[' in branch_line and ']' in branch_line:
+            # Extract the part between [ and ]
+            start = branch_line.find('[')
+            end = branch_line.find(']')
+            if start != -1 and end != -1:
+                status_part = branch_line[start+1:end]
+                return status_part
+        return None
+    
+    def format_ahead_behind(ahead_behind):
+        """Format ahead/behind info with colors and emojis."""
+        if not ahead_behind:
+            return ""
+        
+        if 'ahead' in ahead_behind and 'behind' in ahead_behind:
+            # Both ahead and behind
+            parts = ahead_behind.split(', ')
+            ahead_part = parts[0]
+            behind_part = parts[1]
+            ahead_num = ahead_part.split()[1]
+            behind_num = behind_part.split()[1]
+            return f" [green]▲{ahead_num}[/green] [red]▼{behind_num}[/red]"
+        elif 'ahead' in ahead_behind:
+            # Only ahead
+            num = ahead_behind.split()[1]
+            return f" [green]▲{num}[/green]"
+        elif 'behind' in ahead_behind:
+            # Only behind
+            num = ahead_behind.split()[1]
+            return f" [red]▼{num}[/red]"
+        else:
+            return f" {ahead_behind}"
     
     def parse_diff_stats(diff_output):
         """Parse git diff --stat output to extract line counts."""
@@ -357,6 +396,7 @@ def display_detailed_status(details: dict):
             # Parse branch info from first line
             branch_line = lines[0]
             if branch_line.startswith('##'):
+                ahead_behind = parse_ahead_behind(branch_line)
                 current_branch, upstream_branch = parse_branch_info(branch_line)
                 
                 # Create header with branch info
@@ -365,6 +405,9 @@ def display_detailed_status(details: dict):
                 else:
                     header = f"{repo_name} {CFG['branch']} {current_branch}"
                 
+                # Add ahead/behind info if available
+                if ahead_behind:
+                    header += format_ahead_behind(ahead_behind)
                 console.print(f"\n[bold cyan]{header}[/bold cyan]")
                 
                 # Check if repo is clean
@@ -435,12 +478,17 @@ def display_detailed_status(details: dict):
             branch_line = lines[0]
             if branch_line.startswith('##'):
                 current_branch, upstream_branch = parse_branch_info(branch_line)
+                ahead_behind = parse_ahead_behind(branch_line)
                 
                 # Create header with branch info
                 if upstream_branch:
                     header = f"{repo_name} {current_branch}...{upstream_branch}"
                 else:
                     header = f"{repo_name} {current_branch}"
+                
+                # Add ahead/behind info if available
+                if ahead_behind:
+                    header += format_ahead_behind(ahead_behind)
                 
                 print(f"\n{header}")
                 print("═" * len(header))

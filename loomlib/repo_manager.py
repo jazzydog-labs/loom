@@ -174,20 +174,20 @@ class RepoManager:
         return results
     
     def get_detailed_status(self, repo_name: str) -> dict:
-        """Get detailed git status for a repository."""
-        dev_root = self.get_dev_root() or ""
-        foundry_dir = self.config.get_foundry_dir() or ""
-        repo_path = Path(dev_root) / foundry_dir / repo_name
+        """Get detailed git status for a specific repository."""
+        repo_paths = self.get_repo_paths()
+        if repo_name not in repo_paths:
+            return {"status": f"Repository '{repo_name}' not found", "diff_stats": {}}
         
+        repo_path = Path(repo_paths[repo_name])
         if not repo_path.exists():
-            return {"status": f"Repository not found: {repo_path}", "diff_stats": {}}
+            return {"status": f"Repository path does not exist: {repo_path}", "diff_stats": {}}
         
-        # Get detailed status with untracked files
+        # Get detailed status with branch info and ahead/behind
         success, stdout, stderr = self.git.execute_command(
             repo_path, 
-            ["git", "status", "--short", "--branch", "-uall"]
+            ["git", "status", "--porcelain", "--branch"]
         )
-        
         if not success:
             return {"status": f"Error getting status: {stderr}", "diff_stats": {}}
         
