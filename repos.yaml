@@ -21,4 +21,16 @@ repos:
 
 - name: loom
   url: https://github.com/jazzydog-labs/loom.git
-  path: $DEV_ROOT/$FOUNDRY_DIR/loom 
+  path: $DEV_ROOT/$FOUNDRY_DIR/loom
+
+- name: just-aliases
+  url: https://github.com/jazzydog-labs/just-aliases.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/just-aliases
+
+- name: bill-of-materials
+  url: https://github.com/jazzydog-labs/bill-of-materials.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/bill-of-materials
+
+- name: panorama
+  url: https://github.com/jazzydog-labs/panorama.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/panorama 
