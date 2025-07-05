@@ -1,0 +1,24 @@
+repos:
+- name: crucible
+  url: https://github.com/jazzydog-labs/crucible.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/crucible
+
+- name: foundry-bootstrap
+  url: https://github.com/jazzydog-labs/foundry-bootstrap.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/foundry-bootstrap
+
+- name: ledger
+  url: https://github.com/jazzydog-labs/ledger.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/ledger
+
+- name: vault
+  url: https://github.com/jazzydog-labs/vault.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/vault
+
+- name: forge
+  url: https://github.com/jazzydog-labs/forge.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/forge
+
+- name: loom
+  url: https://github.com/jazzydog-labs/loom.git
+  path: $DEV_ROOT/$FOUNDRY_DIR/loom 
