@@ -52,7 +52,7 @@ else:
 def main():
     """Main entry point."""
     if RICH_AVAILABLE:
-        # If no arguments provided, show commands (if enabled) then status then details by default
+        # If no arguments provided, show commands (if enabled) then details by default
         if len(sys.argv) == 1:
             # Check if we should show available commands
             if config_manager.get_display_config('show_commands_on_status', False):
@@ -69,16 +69,7 @@ def main():
                 help_text = buf.getvalue()
                 console.print(help_text)
             
-            # Show status
-            console.print("\n" + "═"*50)
-            console.print("[bold cyan]Repository Status:[/bold cyan]")
-            console.print("═"*50)
-            show_status()
-            
             # Show details
-            console.print("\n" + "═"*50)
-            console.print("[bold cyan]Detailed Status:[/bold cyan]")
-            console.print("═"*50)
             show_details()
         else:
             app()
@@ -87,23 +78,15 @@ def main():
         if hasattr(args, 'func'):
             args.func(args)
         else:
-            # Show commands (if enabled) then status then details by default when no command provided
+            # Show commands (if enabled) then details by default when no command provided
             if config_manager.get_display_config('show_commands_on_status', False):
                 print("\n" + "═"*50)
                 print("Available Commands:")
                 print("═"*50)
                 parser.print_help()
             
-            # Show status
-            print("\n" + "═"*50)
-            print("Repository Status:")
-            print("═"*50)
-            show_status()
-            
             # Show details
             print("\n" + "═"*50)
-            print("Detailed Status:")
-            print("═"*50)
             show_details()
 
 
@@ -117,24 +100,30 @@ def show_details():
     # Get all repository names
     repo_names = list(repo_manager.get_repo_paths().keys())
     details = {}
-    
+    line = "═" * 50
     if RICH_AVAILABLE:
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console
-        ) as progress:
-            task = progress.add_task("Getting detailed status...", total=None)
-            
-            for name in repo_names:
-                details[name] = repo_manager.get_detailed_status(name)
-            
-            progress.update(task, description="✅ Detailed status completed")
+        from rich.console import Console
+        import time
+        spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        # Print header and spinner
+        console.print(f"[cyan]{line}[/cyan]", markup=True)
+        for i, name in enumerate(repo_names):
+            spinner = spinner_frames[i % len(spinner_frames)]
+            console.print(f"[magenta]Detailed Status: {spinner} Loading...[/magenta]", markup=True, end="\r")
+            details[name] = repo_manager.get_detailed_status(name)
+            time.sleep(0.05)
+        console.print(f"[magenta]Detailed Status: ✅ completed[/magenta]", markup=True)
+        console.print(f"[cyan]{line}[/cyan]", markup=True)
+        # Print repo details after spinner
+        display_detailed_status(details)
     else:
+        print(line)
+        print("Detailed Status: ... loading ...")
+        print(line)
         for name in repo_names:
             details[name] = repo_manager.get_detailed_status(name)
-    
-    display_detailed_status(details)
+        print(f"{line}\nDetailed Status: ✅ completed\n{line}")
+        display_detailed_status(details)
 
 
 def get_dev_root_interactive() -> str:
