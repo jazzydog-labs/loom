@@ -135,6 +135,82 @@ def display_pull_results(results: dict):
             print(f"{name:20} {status}")
 
 
+def display_detailed_status(details: dict):
+    """Display detailed git status for all repositories with color coding and aligned columns."""
+    def parse_status_line(line):
+        # Returns (emoji, code, filename, color)
+        if line.startswith('##'):
+            return ("🌿", "BRANCH", line, "blue")
+        elif line.startswith('A '):
+            return ("✓", "A", line[2:].strip(), "green")
+        elif line.startswith('M '):
+            return ("●", "M", line[2:].strip(), "yellow")
+        elif line.startswith(' D'):
+            return ("✗", "D", line[2:].strip(), "red")
+        elif line.startswith('R '):
+            return ("↔", "R", line[2:].strip(), "magenta")
+        elif line.startswith('C '):
+            return ("📋", "C", line[2:].strip(), "cyan")
+        elif line.startswith('U '):
+            return ("⚠", "U", line[2:].strip(), "red")
+        elif line.startswith(' M'):
+            return ("○", "M", line[2:].strip(), "yellow")
+        elif line.startswith(' D'):
+            return ("○", "D", line[2:].strip(), "red")
+        elif line.startswith('??'):
+            return ("?", "??", line[2:].strip(), "white")
+        elif line.startswith('!!'):
+            return ("!", "!!", line[2:].strip(), "dim")
+        elif line.startswith('stash'):
+            return ("📦", "STASH", line, "blue")
+        else:
+            return ("", "", line, None)
+
+    if RICH_AVAILABLE:
+        repo_names = list(details.keys())
+        for idx, (name, output) in enumerate(details.items()):
+            if idx > 0:
+                console.print()  # Only add newline between repos, not before first
+            console.print(f"[bold cyan]{name}[/bold cyan]")
+            console.print("=" * (len(name) + 2))
+            if output.strip():
+                lines = output.strip().split('\n')
+                for line in lines:
+                    emoji, code, rest, color = parse_status_line(line)
+                    if code == "BRANCH":
+                        console.print(f"[blue]{rest}[/blue]")
+                    elif code == "STASH":
+                        console.print(f"[blue]{emoji} {rest}[/blue]")
+                    elif code:
+                        # Align columns: emoji, code, filename
+                        console.print(f"[{color}]{emoji:<2} {code:<3} {rest}[/]")
+                    else:
+                        console.print(rest)
+            else:
+                console.print("[dim]✨ No changes[/dim]")
+    else:
+        repo_names = list(details.keys())
+        for idx, (name, output) in enumerate(details.items()):
+            if idx > 0:
+                print()  # Only add newline between repos, not before first
+            print(f"{name}")
+            print("=" * (len(name) + 2))
+            if output.strip():
+                lines = output.strip().split('\n')
+                for line in lines:
+                    emoji, code, rest, color = parse_status_line(line)
+                    if code == "BRANCH":
+                        print(f"🌿 {rest}")
+                    elif code == "STASH":
+                        print(f"📦 {rest}")
+                    elif code:
+                        print(f"{emoji:<2} {code:<3} {rest}")
+                    else:
+                        print(rest)
+            else:
+                print("✨ No changes")
+
+
 if RICH_AVAILABLE:
     @app.command()
     def init(
@@ -212,6 +288,20 @@ if RICH_AVAILABLE:
             progress.update(task, description="✅ Status check completed")
         
         display_status_table(statuses)
+
+    @app.command()
+    def details():
+        """Show detailed git status for all repositories."""
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console
+        ) as progress:
+            task = progress.add_task("Getting detailed status...", total=None)
+            details = repo_manager.get_detailed_status()
+            progress.update(task, description="✅ Detailed status completed")
+        
+        display_detailed_status(details)
 
     @app.command()
     def exec(
@@ -298,6 +388,11 @@ else:
         statuses = repo_manager.get_all_status()
         display_status_table(statuses)
 
+    def details_command(args):
+        print("Getting detailed repository status...")
+        details = repo_manager.get_detailed_status()
+        display_detailed_status(details)
+
     def exec_command(args):
         print(f"Executing: {' '.join(args.command)}")
         results = repo_manager.execute_in_all_repos(args.command)
@@ -321,6 +416,7 @@ else:
     
     subparsers.add_parser('pull', help='Pull latest changes for all repositories').set_defaults(func=pull_command)
     subparsers.add_parser('status', help='Show status of all repositories').set_defaults(func=status_command)
+    subparsers.add_parser('details', help='Show detailed git status for all repositories').set_defaults(func=details_command)
     
     exec_parser = subparsers.add_parser('exec', help='Execute a command in all repositories')
     exec_parser.add_argument('command', nargs='+', help='Command to execute')

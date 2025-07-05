@@ -172,6 +172,27 @@ class RepoManager:
         
         return results
     
+    def get_detailed_status(self) -> Dict[str, str]:
+        """Get detailed git status for all repositories using git status --short --branch --show-stash."""
+        repo_paths = self.get_repo_paths()
+        results = {}
+        
+        for name, path in repo_paths.items():
+            path_obj = Path(path)
+            if path_obj.exists() and self.git.is_git_repo(path_obj):
+                success, stdout, stderr = self.git.execute_command(
+                    path_obj, 
+                    ["git", "status", "--short", "--branch", "--show-stash"]
+                )
+                if success:
+                    results[name] = stdout
+                else:
+                    results[name] = f"Error: {stderr}"
+            else:
+                results[name] = "Repository not found or not a git repository"
+        
+        return results
+    
     def bootstrap_foundry(self, dev_root: str) -> bool:
         """Run the foundry-bootstrap setup."""
         foundry_bootstrap_path = Path(dev_root) / "foundry" / "foundry-bootstrap"
