@@ -412,7 +412,7 @@ def display_detailed_status(details: dict):
                 
                 # Check if repo is clean
                 if len(lines) == 1:
-                    console.print(f"  {CFG['clean']} Clean repository")
+                    console.print(f"\n[bold cyan]✨ {header} ✨[/bold cyan]")
                     continue
                 
                 # Group files by directory
@@ -495,7 +495,7 @@ def display_detailed_status(details: dict):
                 
                 # Check if repo is clean
                 if len(lines) == 1:
-                    print("  ✨ Clean repository")
+                    print(f"\n✨ {header} ✨")
                     continue
                 
                 # Group files by directory
