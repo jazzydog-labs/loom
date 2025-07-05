@@ -1,0 +1,11 @@
+name: loom
+description: Central orchestrator for the foundry ecosystem
+type: orchestrator
+remotes:
+  origin: https://github.com/jazzydog-labs/loom.git
+integration_quality:
+  documentation_completeness: good
+  bom_integration: complete
+  context_file_coverage: good
+  last_updated: "2025-01-27"
+  notes: "Central coordination point for the foundry ecosystem" 
