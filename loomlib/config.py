@@ -90,4 +90,13 @@ class ConfigManager:
             return user_config[key]
         
         defaults = self.load_defaults()
-        return defaults.get('defaults', {}).get(key, default) 
+        return defaults.get('defaults', {}).get(key, default)
+    
+    def get_display_config(self, key: str, default: Any = None) -> Any:
+        """Get display configuration value with fallback chain: user -> defaults."""
+        user_config = self.load_user_config()
+        if 'display' in user_config and key in user_config['display']:
+            return user_config['display'][key]
+        
+        defaults = self.load_defaults()
+        return defaults.get('display', {}).get(key, default) 

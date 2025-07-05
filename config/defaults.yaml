@@ -16,4 +16,5 @@ git:
 display:
   show_progress: true
   colors: true
-  max_width: 80 
+  max_width: 80
+  show_commands_on_status: false 

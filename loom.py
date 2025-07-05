@@ -5,6 +5,9 @@ import sys
 import logging
 from pathlib import Path
 from typing import Optional
+import io
+import contextlib
+import typer.main
 
 # Add the loomlib directory to the path
 sys.path.insert(0, str(Path(__file__).parent / "loomlib"))
@@ -327,13 +330,37 @@ else:
 def main():
     """Main entry point."""
     if RICH_AVAILABLE:
-        app()
+        # If no arguments provided, show commands (if enabled) then status by default
+        if len(sys.argv) == 1:
+            # Check if we should show available commands
+            if config_manager.get_display_config('show_commands_on_status', False):
+                console.print("\n" + "="*50)
+                console.print("[bold cyan]Available Commands:[/bold cyan]")
+                console.print("="*50)
+                # Capture help text without exiting
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    try:
+                        app(['--help'])
+                    except SystemExit:
+                        pass
+                help_text = buf.getvalue()
+                console.print(help_text)
+            status()
+        else:
+            app()
     else:
         args = parser.parse_args()
         if hasattr(args, 'func'):
             args.func(args)
         else:
-            parser.print_help()
+            # Show commands (if enabled) then status by default when no command provided
+            if config_manager.get_display_config('show_commands_on_status', False):
+                print("\n" + "="*50)
+                print("Available Commands:")
+                print("="*50)
+                parser.print_help()
+            status_command(args)
 
 
 if __name__ == "__main__":
