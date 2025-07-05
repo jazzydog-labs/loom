@@ -326,12 +326,14 @@ def display_detailed_status(details: dict):
             # Add ahead/behind info if available
             if ahead_behind:
                 header += format_ahead_behind(ahead_behind)
-            console.print(f"\n[bold cyan]{header}[/bold cyan]")
             
             # Check if repo is clean
             if len(lines) == 1:
-                console.print(f"\n[bold cyan]✨ {header} ✨[/bold cyan]")
+                console.print(f"\n[bold #B8860B]{header}[/bold #B8860B] [yellow]✨✨✨[/yellow]")
                 continue
+            
+            # Display header for repos with changes
+            console.print(f"\n[bold #008B8B]{header}[/bold #008B8B]")
             
             # Group files by directory
             files_by_dir = {}
