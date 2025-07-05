@@ -477,21 +477,67 @@ def go(
     
     # If repo name provided directly, use fuzzy matching
     if repo_name:
-        # Use fuzzy matching to find the best match
-        best_match = process.extractOne(repo_name, repo_names, scorer=fuzz.ratio)
-        if best_match and best_match[1] >= 60:  # Threshold for fuzzy matching
-            selected_repo = best_match[0]
+        # First, try exact prefix matching (case-insensitive)
+        prefix_matches = [name for name in repo_names if name.lower().startswith(repo_name.lower())]
+        
+        if len(prefix_matches) == 1:
+            # Single prefix match - use it
+            selected_repo = prefix_matches[0]
+        elif len(prefix_matches) > 1:
+            # Multiple prefix matches - use fzf for selection
+            try:
+                # Check if fzf is available
+                subprocess.run(["fzf", "--version"], capture_output=True, check=True)
+                
+                # Create the fzf command with the input as initial query
+                fzf_cmd = ["fzf", "--prompt", "Select repository: ", "--height", "40%", "--query", repo_name]
+                
+                # Run fzf with matching repository names as input
+                result = subprocess.run(
+                    fzf_cmd,
+                    input="\n".join(prefix_matches),
+                    capture_output=True,
+                    text=True
+                )
+                
+                if result.returncode == 0 and result.stdout.strip():
+                    selected_repo = result.stdout.strip()
+                else:
+                    # User cancelled fzf
+                    return
+                    
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                # Fallback to fuzzy matching if fzf not available
+                best_match = process.extractOne(repo_name, prefix_matches, scorer=fuzz.ratio)
+                if best_match and best_match[1] >= 30:  # Lower threshold for prefix matches
+                    selected_repo = best_match[0]
+                else:
+                    if output_command:
+                        print(f"echo 'Repository {repo_name} not found'")
+                    else:
+                        print(json.dumps({
+                            "error": f"Repository '{repo_name}' not found",
+                            "directory": None,
+                            "message": None,
+                            "context": None
+                        }))
+                    return
         else:
-            if output_command:
-                print(f"echo 'Repository {repo_name} not found'")
+            # No prefix matches, try fuzzy matching with lower threshold
+            best_match = process.extractOne(repo_name, repo_names, scorer=fuzz.ratio)
+            if best_match and best_match[1] >= 40:  # Lower threshold for fuzzy matching
+                selected_repo = best_match[0]
             else:
-                print(json.dumps({
-                    "error": f"Repository '{repo_name}' not found",
-                    "directory": None,
-                    "message": None,
-                    "context": None
-                }))
-            return
+                if output_command:
+                    print(f"echo 'Repository {repo_name} not found'")
+                else:
+                    print(json.dumps({
+                        "error": f"Repository '{repo_name}' not found",
+                        "directory": None,
+                        "message": None,
+                        "context": None
+                    }))
+                return
     else:
         # Use fzf for interactive fuzzy selection
         try:
