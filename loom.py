@@ -790,13 +790,13 @@ else:
 def main():
     """Main entry point."""
     if RICH_AVAILABLE:
-        # If no arguments provided, show commands (if enabled) then status by default
+        # If no arguments provided, show commands (if enabled) then status then details by default
         if len(sys.argv) == 1:
             # Check if we should show available commands
             if config_manager.get_display_config('show_commands_on_status', False):
-                console.print("\n" + "="*50)
+                console.print("\n" + "═"*50)
                 console.print("[bold cyan]Available Commands:[/bold cyan]")
-                console.print("="*50)
+                console.print("═"*50)
                 # Capture help text without exiting
                 buf = io.StringIO()
                 with contextlib.redirect_stdout(buf):
@@ -806,7 +806,18 @@ def main():
                         pass
                 help_text = buf.getvalue()
                 console.print(help_text)
+            
+            # Show status
+            console.print("\n" + "═"*50)
+            console.print("[bold cyan]Repository Status:[/bold cyan]")
+            console.print("═"*50)
             status()
+            
+            # Show details
+            console.print("\n" + "═"*50)
+            console.print("[bold cyan]Detailed Status:[/bold cyan]")
+            console.print("═"*50)
+            details()
         else:
             app()
     else:
@@ -814,13 +825,24 @@ def main():
         if hasattr(args, 'func'):
             args.func(args)
         else:
-            # Show commands (if enabled) then status by default when no command provided
+            # Show commands (if enabled) then status then details by default when no command provided
             if config_manager.get_display_config('show_commands_on_status', False):
-                print("\n" + "="*50)
+                print("\n" + "═"*50)
                 print("Available Commands:")
-                print("="*50)
+                print("═"*50)
                 parser.print_help()
+            
+            # Show status
+            print("\n" + "═"*50)
+            print("Repository Status:")
+            print("═"*50)
             status_command(args)
+            
+            # Show details
+            print("\n" + "═"*50)
+            print("Detailed Status:")
+            print("═"*50)
+            details_command(args)
 
 
 if __name__ == "__main__":
