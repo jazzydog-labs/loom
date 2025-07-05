@@ -321,7 +321,7 @@ def display_detailed_status(details: dict):
         'folder': '📁',
         'dir_sep': '❯',
         'root': '.',
-        'added': '✨',
+        'added': '➕',
         'modified': '✏️',
         'deleted': '🗑️',
         'renamed': '🔄',
