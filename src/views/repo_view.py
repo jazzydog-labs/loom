@@ -83,24 +83,40 @@ class BufferedRepoView:
         
         branch = repo_status.get("branch", "unknown")
         upstream = repo_status.get("upstream_branch")
+        remote_name = repo_status.get("remote_name")
         is_clean = repo_status.get("is_clean", False)
         
-        # Build header text
+        # Build header text with remote information
+        header = f"{repo_name} {self.symbols['branch']} {branch}"
+        
+        # Add upstream/remote info with arrow notation
         if upstream:
-            header = f"{repo_name} {self.symbols['branch']} {branch}...{upstream}"
-        else:
-            header = f"{repo_name} {self.symbols['branch']} {branch}"
+            if remote_name:
+                # Show just the branch part after the remote name for cleaner display
+                upstream_branch_only = upstream.split('/')[-1] if '/' in upstream else upstream
+                if upstream_branch_only == branch:
+                    # Same branch name, just show remote
+                    header += f" → {remote_name}"
+                else:
+                    # Different branch name, show full upstream
+                    header += f" → {upstream}"
+            else:
+                header += f" → {upstream}"
         
         # Add ahead/behind info
         ahead = repo_status.get("ahead_count", 0)
         behind = repo_status.get("behind_count", 0)
         
+        status_indicators = []
         if ahead > 0:
             ahead_text = f"{self.symbols['ahead']}{ahead}"
-            header += f" {self.color_manager.format_ahead_behind(ahead_text, True)}"
+            status_indicators.append(self.color_manager.format_ahead_behind(ahead_text, True))
         if behind > 0:
             behind_text = f"{self.symbols['behind']}{behind}"
-            header += f" {self.color_manager.format_ahead_behind(behind_text, False)}"
+            status_indicators.append(self.color_manager.format_ahead_behind(behind_text, False))
+        
+        if status_indicators:
+            header += f" {' '.join(status_indicators)}"
         
         # Display header with appropriate styling using color manager
         formatted_header = self.color_manager.format_repo_header(header, is_clean)
@@ -514,24 +530,40 @@ class RepoView:
         
         branch = repo_status.get("branch", "unknown")
         upstream = repo_status.get("upstream_branch")
+        remote_name = repo_status.get("remote_name")
         is_clean = repo_status.get("is_clean", False)
         
-        # Build header text
+        # Build header text with remote information
+        header = f"{repo_name} {self.symbols['branch']} {branch}"
+        
+        # Add upstream/remote info with arrow notation
         if upstream:
-            header = f"{repo_name} {self.symbols['branch']} {branch}...{upstream}"
-        else:
-            header = f"{repo_name} {self.symbols['branch']} {branch}"
+            if remote_name:
+                # Show just the branch part after the remote name for cleaner display
+                upstream_branch_only = upstream.split('/')[-1] if '/' in upstream else upstream
+                if upstream_branch_only == branch:
+                    # Same branch name, just show remote
+                    header += f" → {remote_name}"
+                else:
+                    # Different branch name, show full upstream
+                    header += f" → {upstream}"
+            else:
+                header += f" → {upstream}"
         
         # Add ahead/behind info
         ahead = repo_status.get("ahead_count", 0)
         behind = repo_status.get("behind_count", 0)
         
+        status_indicators = []
         if ahead > 0:
             ahead_text = f"{self.symbols['ahead']}{ahead}"
-            header += f" {self.color_manager.format_ahead_behind(ahead_text, True)}"
+            status_indicators.append(self.color_manager.format_ahead_behind(ahead_text, True))
         if behind > 0:
             behind_text = f"{self.symbols['behind']}{behind}"
-            header += f" {self.color_manager.format_ahead_behind(behind_text, False)}"
+            status_indicators.append(self.color_manager.format_ahead_behind(behind_text, False))
+        
+        if status_indicators:
+            header += f" {' '.join(status_indicators)}"
         
         # Display header with appropriate styling using color manager
         formatted_header = self.color_manager.format_repo_header(header, is_clean)

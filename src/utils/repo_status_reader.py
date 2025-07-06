@@ -15,14 +15,33 @@ class RepoStatusReader:
 
     def get_summary_json(self):
         head = self.repo.head.commit
+        
+        # Get upstream branch information
+        upstream_branch = None
+        remote_name = None
+        try:
+            # Get the tracking branch
+            tracking_branch = self.repo.active_branch.tracking_branch()
+            if tracking_branch:
+                upstream_branch = tracking_branch.name
+                # Extract remote name (e.g., "origin/main" -> "origin")
+                if '/' in upstream_branch:
+                    remote_name = upstream_branch.split('/')[0]
+        except (AttributeError, exc.GitCommandError):
+            pass
+        
+        # Get ahead/behind counts
         try:
             ahead = len(list(self.repo.iter_commits(f'@{{u}}..', quiet=True)))
             behind = len(list(self.repo.iter_commits(f'..@{{u}}', quiet=True)))
         except (exc.GitCommandError, ValueError):
             ahead = 0
             behind = 0
+            
         return {
             "branch": self.repo.active_branch.name,
+            "upstream_branch": upstream_branch,
+            "remote_name": remote_name,
             "clean": not self.repo.is_dirty(untracked_files=True),
             "ahead": ahead,
             "behind": behind,
@@ -39,6 +58,8 @@ class RepoStatusReader:
         return {
             'repo_status': {
                 'branch': raw_data.get('branch', 'unknown'),
+                'upstream_branch': raw_data.get('upstream_branch'),
+                'remote_name': raw_data.get('remote_name'),
                 'is_clean': raw_data.get('clean', True),
                 'ahead_count': raw_data.get('ahead', 0),
                 'behind_count': raw_data.get('behind', 0),
