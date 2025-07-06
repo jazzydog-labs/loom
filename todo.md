@@ -2,7 +2,7 @@
 
 ## Workflow
 - [x] Create a json-based interface to get all todos in a directory, from ./todo.md, and comments with `#todo:` in all code, for a particular repo. this should go in src/infra/todo_manager.py
-- [ ] Document desired workflows
+- [x] Document desired workflows
 
 ## Refactoring
 - Extract a clean JSON interface

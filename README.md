@@ -26,6 +26,9 @@ python3 loom.py details   # show repository details
 python3 loom.py go <repo> # enter a repository
 ```
 
+See [docs/workflows.md](docs/workflows.md) for a walkthrough of the common
+day‑to‑day commands and how they fit together.
+
 ## Configuration
 
 - **repos.yaml** – registry of sibling repositories
