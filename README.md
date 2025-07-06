@@ -8,16 +8,15 @@ coordinates commands, and keeps your development directory organized.
 ```bash
 git clone git@github.com:jazzydog-labs/loom.git
 cd loom
-./bootstrap.sh  # installs dependencies and runs `loom init`
+python3 loom.py init
 ```
 
 ## Basic Commands
 
 ```bash
-python3 loom.py init             # clone or update repositories
-python3 loom.py status           # show repository status
-python3 loom.py pull             # pull the latest changes
-python3 loom.py exec -- <cmd>    # run a command in each repo
+python3 loom.py init      # set up repositories
+python3 loom.py details   # show repository details
+python3 loom.py go <repo> # enter a repository
 ```
 
 ## Configuration
@@ -46,14 +45,6 @@ operations to `LoomController` located in `src/controllers/loom_controller.py`.
 The controller coordinates the managers in `src/core` and implements the actual
 command logic. This separation keeps the entry point small and the logic
 testable.
-
-## Development
-
-Run tests with:
-
-```bash
-python3 run_tests.py
-```
 
 ## Contributing
 
