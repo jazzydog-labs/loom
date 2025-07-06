@@ -19,7 +19,7 @@
 
 ## Architecture Skeleton
 - [x] Integrate new `cli` package with Typer commands
-- [ ] Wire `app.LoomController` into existing CLI
+- [x] Wire `app.LoomController` into existing CLI
 - [ ] Flesh out domain aggregates (`Repo`, `Foundry`, `FreezeSnapshot`)
 - [ ] Implement services
   - [ ] `RepoStatusSvc`

@@ -14,7 +14,9 @@ from src.infra.auth_context import AuthContext
 
 def test_freeze_snapshot():
     snap = FreezeSnapshot()
-    assert "TODO" in snap.describe()
+    # Empty snapshot should report no repos and blank BOM hash
+    assert snap.describe().startswith("Freeze snapshot")
+    assert snap.bom_hash == ""
 
 
 def test_services():
