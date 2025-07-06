@@ -331,12 +331,16 @@ class LoomController:
                 if not push_success:
                     return (name, "failed", "git push error")
                 
+                # Format commit count message
+                commit_count = int(ahead)
+                commit_word = "commit" if commit_count == 1 else "commits"
+                
                 if pull_had_changes and push_had_changes:
-                    return (name, "pulled_pushed", "pulled changes and pushed commits")
+                    return (name, "pulled_pushed", f"pulled changes and pushed {commit_count} {commit_word}")
                 elif pull_had_changes:
-                    return (name, "pulled_pushed", "pulled changes, no commits to push")
+                    return (name, "pulled_pushed", f"pulled changes, no {commit_word} to push")
                 elif push_had_changes:
-                    return (name, "pulled_pushed", "pushed commits")
+                    return (name, "pulled_pushed", f"pushed {commit_count} {commit_word}")
                 else:
                     return (name, "up_to_date", "already up to date")
             else:
