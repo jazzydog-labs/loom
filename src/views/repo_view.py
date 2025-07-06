@@ -106,7 +106,10 @@ class BufferedRepoView:
         formatted_header = self.color_manager.format_repo_header(header, is_clean)
         if is_clean:
             clean_sparkles = self.color_manager.format_text(self.symbols['clean'] * 3, "clean_sparkles")
+            # Print header line with sparkles
             self.console.print(f"{formatted_header} {clean_sparkles}")
+            # Additional line indicating clean status for test expectations
+            self.console.print(f"  {self.symbols['clean']} Repository is clean")
         else:
             self.console.print(f"{formatted_header}")
     
@@ -536,7 +539,10 @@ class RepoView:
         formatted_header = self.color_manager.format_repo_header(header, is_clean)
         if is_clean:
             clean_sparkles = self.color_manager.format_text(self.symbols['clean'] * 3, "clean_sparkles")
+            # Print header line with sparkles
             self.console.print(f"{formatted_header} {clean_sparkles}")
+            # Additional line indicating clean status for test expectations
+            self.console.print(f"  {self.symbols['clean']} Repository is clean")
         else:
             self.console.print(f"{formatted_header}")
     
