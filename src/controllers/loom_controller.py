@@ -367,25 +367,38 @@ class LoomController:
 
         def _create_status_display():
             """Create the live status display."""
-            lines = []
+            # Calculate live summary counts
+            synced_count = sum(1 for info in repo_status.values() if info["status"] in ["pulled", "pulled_pushed"])
+            up_to_date_count = sum(1 for info in repo_status.values() if info["status"] == "up_to_date")
+            skipped_count = sum(1 for info in repo_status.values() if info["status"] == "skipped")
+            failed_count = sum(1 for info in repo_status.values() if info["status"] == "failed")
+            
+            # Create summary line
+            summary_text = Text.from_markup(f"[bold]Sync summary:[/bold] Synced: {synced_count} | Up to date: {up_to_date_count} | Skipped: {skipped_count} | Failed: {failed_count}")
+            
+            # Build renderables list
+            renderables = []
+            renderables.append(summary_text)
+            renderables.append(Text(""))  # Add empty line after summary
+            
             for name, info in repo_status.items():
                 if info["status"] == "pending":
                     # Use Columns to properly combine spinner with text
                     spinner_text = Columns([info['spinner'], Text(f"{name}: syncing...")])
-                    lines.append(spinner_text)
+                    renderables.append(spinner_text)
                 elif info["status"] == "pulled":
-                    lines.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
                 elif info["status"] == "pulled_pushed":
-                    lines.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
                 elif info["status"] == "up_to_date":
-                    lines.append(Text.from_markup(f"{self.emoji.get_status('info')} {name}: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('info')} {name}: {info['message']}"))
                 elif info["status"] == "skipped":
-                    lines.append(Text.from_markup(f"{self.emoji.get_status('warning')} Skipped {name}: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('warning')} Skipped {name}: {info['message']}"))
                 elif info["status"] == "failed":
-                    lines.append(Text.from_markup(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}"))
             
             # Create a proper renderable with line breaks
-            return Group(*lines)
+            return Group(*renderables)
 
         # Execute sync operations with live progress
         with Live(_create_status_display(), console=self.console, refresh_per_second=4) as live:
@@ -410,20 +423,7 @@ class LoomController:
                         repo_status[repo_name]["message"] = f"error: {str(e)}"
                         live.update(_create_status_display())
 
-        # Calculate and display summary
-        results = [(name, info["status"], info["message"]) for name, info in repo_status.items()]
-        pulled = [r for r in results if r[1] == "pulled"]
-        pulled_pushed = [r for r in results if r[1] == "pulled_pushed"]
-        up_to_date = [r for r in results if r[1] == "up_to_date"]
-        skipped = [r for r in results if r[1] == "skipped"]
-        failed = [r for r in results if r[1] == "failed"]
-
-        total_synced = len(pulled) + len(pulled_pushed)
-        self.console.print("\n[bold cyan]Sync summary:[/bold cyan]")
-        if push:
-            self.console.print(f"Synced: {total_synced} | Up to date: {len(up_to_date)} | Skipped: {len(skipped)} | Failed: {len(failed)}")
-        else:
-            self.console.print(f"Pulled: {len(pulled)} | Up to date: {len(up_to_date)} | Skipped: {len(skipped)} | Failed: {len(failed)}")
+        # Summary is now displayed live at the top - no need for additional summary
 
     # ------------------------------------------------------------------
     # Helper methods
