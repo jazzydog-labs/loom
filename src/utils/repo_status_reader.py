@@ -16,9 +16,12 @@ class RepoStatusReader:
     def get_summary_json(self):
         head = self.repo.head.commit
         
-        # Get upstream branch information
+        # Get upstream branch information and ahead/behind counts
         upstream_branch = None
         remote_name = None
+        ahead = 0
+        behind = 0
+        
         try:
             # Get the tracking branch
             tracking_branch = self.repo.active_branch.tracking_branch()
@@ -27,16 +30,13 @@ class RepoStatusReader:
                 # Extract remote name (e.g., "origin/main" -> "origin")
                 if '/' in upstream_branch:
                     remote_name = upstream_branch.split('/')[0]
-        except (AttributeError, exc.GitCommandError):
+                
+                # Count commits ahead (local commits not in upstream)
+                ahead = len(list(self.repo.iter_commits(f'{tracking_branch.name}..HEAD')))
+                # Count commits behind (upstream commits not in local)
+                behind = len(list(self.repo.iter_commits(f'HEAD..{tracking_branch.name}')))
+        except (AttributeError, exc.GitCommandError, ValueError):
             pass
-        
-        # Get ahead/behind counts
-        try:
-            ahead = len(list(self.repo.iter_commits(f'@{{u}}..', quiet=True)))
-            behind = len(list(self.repo.iter_commits(f'..@{{u}}', quiet=True)))
-        except (exc.GitCommandError, ValueError):
-            ahead = 0
-            behind = 0
             
         return {
             "branch": self.repo.active_branch.name,
