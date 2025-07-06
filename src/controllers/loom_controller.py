@@ -9,11 +9,13 @@ import io
 import json
 import subprocess
 
-from rich.console import Console
+from rich.console import Console, Group
 from rich.prompt import Prompt, Confirm
 from rich.live import Live
 from rich.spinner import Spinner
 from rich.table import Table
+from rich.text import Text
+from rich.columns import Columns
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..core.config import ConfigManager
@@ -368,18 +370,22 @@ class LoomController:
             lines = []
             for name, info in repo_status.items():
                 if info["status"] == "pending":
-                    lines.append(f"{info['spinner']} {name}: syncing...")
+                    # Use Columns to properly combine spinner with text
+                    spinner_text = Columns([info['spinner'], Text(f"{name}: syncing...")])
+                    lines.append(spinner_text)
                 elif info["status"] == "pulled":
-                    lines.append(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}")
+                    lines.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
                 elif info["status"] == "pulled_pushed":
-                    lines.append(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}")
+                    lines.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
                 elif info["status"] == "up_to_date":
-                    lines.append(f"{self.emoji.get_status('info')} {name}: {info['message']}")
+                    lines.append(Text.from_markup(f"{self.emoji.get_status('info')} {name}: {info['message']}"))
                 elif info["status"] == "skipped":
-                    lines.append(f"{self.emoji.get_status('warning')} Skipped {name}: {info['message']}")
+                    lines.append(Text.from_markup(f"{self.emoji.get_status('warning')} Skipped {name}: {info['message']}"))
                 elif info["status"] == "failed":
-                    lines.append(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}")
-            return "\n".join(lines)
+                    lines.append(Text.from_markup(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}"))
+            
+            # Create a proper renderable with line breaks
+            return Group(*lines)
 
         # Execute sync operations with live progress
         with Live(_create_status_display(), console=self.console, refresh_per_second=4) as live:
