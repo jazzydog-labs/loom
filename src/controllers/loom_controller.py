@@ -379,7 +379,7 @@ class LoomController:
             # Build renderables list
             renderables = []
             renderables.append(summary_text)
-            renderables.append(Text(""))  # Add empty line after summary
+            renderables.append(Text("[dim]Press ↵ to continue…[/]"))
             
             for name, info in repo_status.items():
                 if info["status"] == "pending":
@@ -387,15 +387,15 @@ class LoomController:
                     spinner_text = Columns([info['spinner'], Text(f"{name}: syncing...")])
                     renderables.append(spinner_text)
                 elif info["status"] == "pulled":
-                    renderables.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced  [bold]{name}[/bold]: {info['message']}"))
                 elif info["status"] == "pulled_pushed":
-                    renderables.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('success')} Synced  [bold]{name}[/bold]: {info['message']}"))
                 elif info["status"] == "up_to_date":
-                    renderables.append(Text.from_markup(f"{self.emoji.get_status('info')} {name}: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('info')}  {name}: {info['message']}"))
                 elif info["status"] == "skipped":
-                    renderables.append(Text.from_markup(f"{self.emoji.get_status('warning')} Skipped {name}: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('warning')}  Skipped {name}: {info['message']}"))
                 elif info["status"] == "failed":
-                    renderables.append(Text.from_markup(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}"))
+                    renderables.append(Text.from_markup(f"{self.emoji.get_status('error')}  Failed to sync {name}: {info['message']}"))
             
             # Create a proper renderable with line breaks
             return Group(*renderables)
@@ -408,7 +408,6 @@ class LoomController:
                     executor.submit(_sync_repo, item): item[0]
                     for item in repo_paths.items()
                 }
-                
                 # Process results as they complete
                 for future in as_completed(future_to_repo):
                     repo_name = future_to_repo[future]
@@ -418,15 +417,12 @@ class LoomController:
                         repo_status[name]["message"] = reason
                         # Update the live display
                         live.update(_create_status_display())
-                    except Exception as e:
+                    except Exception as e: 
                         repo_status[repo_name]["status"] = "failed"
                         repo_status[repo_name]["message"] = f"error: {str(e)}"
                         live.update(_create_status_display())
-
-        # Add newline after Live context exits for proper visual separation from terminal prompt
-        self.console.print()
-        
-        # Summary is now displayed live at the top - no need for additional summary
+            # after finishing, wait for user input using live.console.line()
+            self.console.input()
 
     # ------------------------------------------------------------------
     # Helper methods
