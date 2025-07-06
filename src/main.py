@@ -26,6 +26,8 @@ from .core.git import GitManager
 from .core.repo_manager import RepoManager
 from .utils.color_manager import ColorManager
 from .utils.emojis import get_emoji_manager
+from .utils.repo_status_reader import RepoStatusReader
+from .views.repo_view import RepoView
 from .commands.git.commands import create_git_app
 
 # Initialize managers
@@ -67,27 +69,34 @@ def show_status():
 
 def show_details():
     """Show detailed status of all repositories."""
-    # Get all repository names
+    # Get all repository configurations
     repos_config = config_manager.load_repos()
-    repo_names = [repo['name'] for repo in repos_config.get('repos', [])]
-    details = {}
-    line = "═" * 50
-    import time
-    spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
-    # Print header and spinner
-    separator = color_manager.format_text(line, "separator")
-    console.print(separator, markup=True)
-    for i, name in enumerate(repo_names):
-        spinner = spinner_frames[i % len(spinner_frames)]
-        progress_text = color_manager.format_text(f"Detailed Status: {spinner} Loading...", "progress")
-        console.print(progress_text, markup=True, end="\r")
-        details[name] = repo_manager.get_detailed_status(name)
-        time.sleep(0.05)
-    completed_text = color_manager.format_text(f"Detailed Status: {emoji_mgr.get_status('success')} completed", "progress")
-    console.print(completed_text, markup=True)
-    console.print(separator, markup=True)
-    # Print repo details after spinner
-    display_detailed_status(details)
+    repos = repos_config.get('repos', [])
+    
+    if not repos:
+        console.print("No repositories configured.")
+        return
+    
+    # Get dev_root and foundry_dir for path resolution
+    dev_root = config_manager.get_dev_root()
+    foundry_dir = config_manager.get_foundry_dir()
+    
+    if not dev_root:
+        console.print("Development root not configured. Please run 'loom init' first.")
+        return
+    
+    # Build mapping of repo names to absolute paths
+    repo_paths = {
+        repo['name']: repo['path'].replace('$DEV_ROOT', dev_root).replace('$FOUNDRY_DIR', foundry_dir)
+        for repo in repos
+    }
+
+    # Fetch summaries in parallel using RepoStatusReader helper
+    repos_data = RepoStatusReader.summaries_parallel(repo_paths)
+
+    # Display using RepoView (sequential display)
+    repo_view = RepoView(console)
+    repo_view.display_multiple_repos(repos_data)
 
 
 def get_dev_root_interactive() -> str:
@@ -150,253 +159,7 @@ def display_pull_results(results: dict):
     console.print(table)
 
 
-def display_detailed_status(details: dict):
-    """Display detailed git status for all repositories with color coding, aligned columns, and diff statistics."""
-    import re
-    
-    def parse_status_line(line):
-        # Returns (emoji, code, filename, color)
-        if line.startswith('##'):
-            return (None, "BRANCH", line, "blue")
-        elif line.startswith('A '):
-            return (CFG['added'], "A", line[2:].strip(), "green")
-        elif line.startswith('M '):
-            return (CFG['file_circle'], "M", line[2:].strip(), "yellow")  # Staged
-        elif line.startswith('MM'):
-            return (CFG['file_circle'], "MM", line[2:].strip(), "yellow")  # Both staged and unstaged
-        elif line.startswith(' M'):
-            return (CFG['modified'], " M", line[2:].strip(), "yellow")  # Unstaged only
-        elif line.startswith(' D'):
-            return (CFG['deleted'], "D", line[2:].strip(), "red")
-        elif line.startswith('R '):
-            return (CFG['renamed'], "R", line[2:].strip(), "magenta")
-        elif line.startswith('C '):
-            return (CFG['copied'], "C", line[2:].strip(), "cyan")
-        elif line.startswith('U '):
-            return (CFG['unmerged'], "U", line[2:].strip(), "red")
-        elif line.startswith('??'):
-            return (CFG['untracked'], "??", line[2:].strip(), "white")
-        elif line.startswith('!!'):
-            return (CFG['ignored'], "!!", line[2:].strip(), "dim")
-        else:
-            return (None, "UNKNOWN", line, "white")
-    
-    def get_max_filename_length(details):
-        """Calculate the maximum filename length for alignment."""
-        max_length = 0
-        for repo_data in details.values():
-            if isinstance(repo_data, str):
-                output = repo_data
-            else:
-                output = repo_data.get("status", "")
-            
-            if not output.strip():
-                continue
-            
-            lines = output.strip().split('\n')
-            for line in lines[1:]:  # Skip branch line
-                if not line.strip():
-                    continue
-                
-                emoji, code, filename, color = parse_status_line(line)
-                if emoji and filename:
-                    max_length = max(max_length, len(filename))
-        
-        return max_length
-    
-    def parse_branch_info(branch_line):
-        # Example: '## main...origin/main [ahead 1]' or '## main' or '## HEAD (no branch)'
-        # Remove the ahead/behind part first
-        clean_line = branch_line
-        if '[' in branch_line and ']' in branch_line:
-            start = branch_line.find('[')
-            clean_line = branch_line[:start].strip()
-        
-        if '...' in clean_line:
-            current, upstream = clean_line[3:].split('...')
-            return current.strip(), upstream.strip()
-        else:
-            current = clean_line[3:].strip()
-            return current, None
-    
-    def parse_ahead_behind(branch_line):
-        if '[' in branch_line and ']' in branch_line:
-            # Extract the part between [ and ]
-            start = branch_line.find('[')
-            end = branch_line.find(']')
-            if start != -1 and end != -1:
-                status_part = branch_line[start+1:end]
-                return status_part
-        return None
-    
-    def format_ahead_behind(ahead_behind):
-        """Format ahead/behind info with colors and emojis."""
-        if not ahead_behind:
-            return ""
-        
-        if 'ahead' in ahead_behind and 'behind' in ahead_behind:
-            # Both ahead and behind
-            parts = ahead_behind.split(', ')
-            ahead_part = parts[0]
-            behind_part = parts[1]
-            ahead_num = ahead_part.split()[1]
-            behind_num = behind_part.split()[1]
-            ahead_text = color_manager.format_ahead_behind(f"▲{ahead_num}", True)
-            behind_text = color_manager.format_ahead_behind(f"▼{behind_num}", False)
-            return f" {ahead_text} {behind_text}"
-        elif 'ahead' in ahead_behind:
-            # Only ahead
-            num = ahead_behind.split()[1]
-            return f" {color_manager.format_ahead_behind(f'▲{num}', True)}"
-        elif 'behind' in ahead_behind:
-            # Only behind
-            num = ahead_behind.split()[1]
-            return f" {color_manager.format_ahead_behind(f'▼{num}', False)}"
-        else:
-            return f" {ahead_behind}"
-    
-    def parse_diff_stats(diff_output):
-        """Parse git diff --stat output to extract line counts."""
-        if not diff_output:
-            return {}
-        
-        stats = {}
-        lines = diff_output.strip().split('\n')
-        
-        for line in lines:
-            # Look for lines like " 1 file changed, 1 insertion(+), 1 deletion(-)"
-            if 'file changed' in line:
-                continue
-            
-            # Look for lines like " src/main.py | 10 +++++-----"
-            if '|' in line:
-                parts = line.split('|')
-                if len(parts) == 2:
-                    filename = parts[0].strip()
-                    stat_part = parts[1].strip()
-                    
-                    # Extract numbers from stat part
-                    # Example: " 10 +++++-----" -> +10, -5
-                    additions = stat_part.count('+')
-                    deletions = stat_part.count('-')
-                    
-                    if additions > 0 or deletions > 0:
-                        stats[filename] = f"+{additions} -{deletions}"
-        
-        return stats
-    
-    # Import emoji utilities
-    from .utils.emojis import get_emoji_manager
-    
-    # Get emoji configuration
-    emoji_mgr = get_emoji_manager()
-    CFG = {
-        'folder': emoji_mgr.get_files('folder'),
-        'dir_sep': '❯',
-        'root': '.',
-        'added': emoji_mgr.get_git('added'),
-        'modified': emoji_mgr.get_git('modified'),
-        'deleted': emoji_mgr.get_git('deleted'),
-        'renamed': emoji_mgr.get_git('renamed'),
-        'copied': '📋',
-        'unmerged': emoji_mgr.get_git('unmerged'),
-        'untracked': emoji_mgr.get_git('untracked'),
-        'ignored': '🚫',
-        'stash': emoji_mgr.get_git('staged'),
-        'clean': '✨',
-        'branch': '🌿',
-        'file_circle': '🖊️',
-        'success': emoji_mgr.get_status('success'),
-        'warning': emoji_mgr.get_status('warning'),
-        'error': emoji_mgr.get_status('error'),
-    }
-    
-    max_filename_length = get_max_filename_length(details)
-    
-    for repo_name, repo_data in details.items():
-        if isinstance(repo_data, str):
-            output = repo_data
-        else:
-            output = repo_data.get("status", "")
-        
-        if not output.strip():
-            continue
-        
-        lines = output.strip().split('\n')
-        if not lines:
-            continue
-        
-        # Parse branch info from first line
-        branch_line = lines[0]
-        if branch_line.startswith('##'):
-            ahead_behind = parse_ahead_behind(branch_line)
-            current_branch, upstream_branch = parse_branch_info(branch_line)
-            
-            # Create header with branch info
-            if upstream_branch:
-                header = f"{repo_name} {CFG['branch']} {current_branch}...{upstream_branch}"
-            else:
-                header = f"{repo_name} {CFG['branch']} {current_branch}"
-            
-            # Add ahead/behind info if available
-            if ahead_behind:
-                header += format_ahead_behind(ahead_behind)
-            
-            # Check if repo is clean
-            if len(lines) == 1:
-                header_text = color_manager.format_repo_header(header, is_clean=True)
-                sparkles = color_manager.format_text("✨✨✨", "clean_sparkles")
-                console.print(f"\n{header_text} {sparkles}")
-                continue
-            
-            # Display header for repos with changes
-            header_text = color_manager.format_repo_header(header, is_clean=False)
-            console.print(f"\n{header_text}")
-            
-            # Group files by directory
-            files_by_dir = {}
-            current_dir = ""
-            
-            for line in lines[1:]:
-                if not line.strip():
-                    continue
-                
-                emoji, code, filename, color = parse_status_line(line)
-                if not emoji:
-                    continue
-                
-                # Extract directory and filename
-                if '/' in filename:
-                    dir_part, file_part = filename.rsplit('/', 1)
-                    if dir_part not in files_by_dir:
-                        files_by_dir[dir_part] = []
-                    files_by_dir[dir_part].append((emoji, file_part, color))
-                else:
-                    if "" not in files_by_dir:
-                        files_by_dir[""] = []
-                    files_by_dir[""].append((emoji, filename, color))
-            
-            # Display files grouped by directory
-            for directory, files in files_by_dir.items():
-                if directory:
-                    console.print(f"  {CFG['folder']} {directory} {CFG['dir_sep']}")
-                    indent = "    "
-                else:
-                    indent = "  "
-                
-                # Group files on the same line
-                file_line = []
-                for emoji, filename, color in files:
-                    file_line.append(f"{emoji} {filename}")
-                
-                # Join files with spaces
-                console.print(f"{indent}{' '.join(file_line)}")
-            
-            console.print("")  # Empty line between repos
-        else:
-            console.print(f"\n[bold cyan]{repo_name}[/bold cyan]")
-            console.print(f"  {CFG['error']} Error getting status")
-            console.print("")
+
 
 
 # Create a separate app for the 'do' commands

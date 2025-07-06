@@ -70,8 +70,6 @@ class BufferedRepoView:
         # Display file changes if any
         if any(count > 0 for count in file_counts.values()):
             self._display_file_changes(file_status, file_counts)
-        else:
-            self.console.print(f"  {self.symbols['clean']} Working directory is clean")
         
         # Add spacing after each repo
         self.console.print()
@@ -230,8 +228,6 @@ class RepoView:
         # Display file changes if any
         if any(count > 0 for count in file_counts.values()):
             self._display_file_changes(file_status, file_counts)
-        else:
-            self.console.print(f"  {self.symbols['clean']} Working directory is clean")
         
     def display_multiple_repos_parallel(self, repos_data: Dict[str, Dict[str, Any]], max_workers: int = 4) -> None:
         """Display multiple repositories using parallel processing with buffered output.
