@@ -11,6 +11,10 @@ import subprocess
 
 from rich.console import Console
 from rich.prompt import Prompt, Confirm
+from rich.live import Live
+from rich.spinner import Spinner
+from rich.table import Table
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..core.config import ConfigManager
 from ..core.git import GitManager
@@ -280,7 +284,7 @@ class LoomController:
     # Repository sync operation
     # ------------------------------------------------------------------
     def sync(self, push: bool = False) -> None:
-        """Pull latest changes for all clean repositories in parallel.
+        """Pull latest changes for all clean repositories in parallel with real-time progress.
 
         A repository is considered safe to sync if:
         1. It has no uncommitted changes (status == "clean"), and
@@ -297,6 +301,11 @@ class LoomController:
         if not repo_paths:
             self.console.print("No repositories configured – run 'loom init' first.")
             return
+
+        # Initialize progress tracking
+        repo_status = {}
+        for name in repo_paths.keys():
+            repo_status[name] = {"status": "pending", "message": "", "spinner": Spinner("dots")}
 
         def _sync_repo(item):
             name, path = item
@@ -354,29 +363,55 @@ class LoomController:
                 else:
                     return (name, "up_to_date", "already up to date")
 
-        # Execute sync operations in parallel
-        results = map_parallel(_sync_repo, list(repo_paths.items()))
+        def _create_status_display():
+            """Create the live status display."""
+            lines = []
+            for name, info in repo_status.items():
+                if info["status"] == "pending":
+                    lines.append(f"{info['spinner']} {name}: syncing...")
+                elif info["status"] == "pulled":
+                    lines.append(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}")
+                elif info["status"] == "pulled_pushed":
+                    lines.append(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {info['message']}")
+                elif info["status"] == "up_to_date":
+                    lines.append(f"{self.emoji.get_status('info')} {name}: {info['message']}")
+                elif info["status"] == "skipped":
+                    lines.append(f"{self.emoji.get_status('warning')} Skipped {name}: {info['message']}")
+                elif info["status"] == "failed":
+                    lines.append(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}")
+            return "\n".join(lines)
 
+        # Execute sync operations with live progress
+        with Live(_create_status_display(), console=self.console, refresh_per_second=4) as live:
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                # Submit all tasks
+                future_to_repo = {
+                    executor.submit(_sync_repo, item): item[0]
+                    for item in repo_paths.items()
+                }
+                
+                # Process results as they complete
+                for future in as_completed(future_to_repo):
+                    repo_name = future_to_repo[future]
+                    try:
+                        name, outcome, reason = future.result()
+                        repo_status[name]["status"] = outcome
+                        repo_status[name]["message"] = reason
+                        # Update the live display
+                        live.update(_create_status_display())
+                    except Exception as e:
+                        repo_status[repo_name]["status"] = "failed"
+                        repo_status[repo_name]["message"] = f"error: {str(e)}"
+                        live.update(_create_status_display())
+
+        # Calculate and display summary
+        results = [(name, info["status"], info["message"]) for name, info in repo_status.items()]
         pulled = [r for r in results if r[1] == "pulled"]
         pulled_pushed = [r for r in results if r[1] == "pulled_pushed"]
         up_to_date = [r for r in results if r[1] == "up_to_date"]
         skipped = [r for r in results if r[1] == "skipped"]
         failed = [r for r in results if r[1] == "failed"]
 
-        # Display per-repo outcome
-        for name, outcome, reason in results:
-            if outcome == "pulled":
-                self.console.print(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {reason}")
-            elif outcome == "pulled_pushed":
-                self.console.print(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {reason}")
-            elif outcome == "up_to_date":
-                self.console.print(f"{self.emoji.get_status('info')} {name}: {reason}")
-            elif outcome == "skipped":
-                self.console.print(f"{self.emoji.get_status('warning')} Skipped {name}: {reason}")
-            else:
-                self.console.print(f"{self.emoji.get_status('error')} Failed to sync {name}: {reason}")
-
-        # Summary
         total_synced = len(pulled) + len(pulled_pushed)
         self.console.print("\n[bold cyan]Sync summary:[/bold cyan]")
         if push:
