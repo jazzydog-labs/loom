@@ -146,12 +146,12 @@ else
 fi
 
 echo ""
-echo "🎉 Loom bootstrap completed!"
+echo "✨ Loom bootstrap completed!"
 echo "You can now use loom commands:"
 echo "  loom status  # Check repository status"
 echo "  loom pull    # Pull latest changes"
 echo "  loom exec -- ls -la  # Execute command in all repos"
 echo ""
 echo "Note: If 'loom' command is not found, you may need to add ~/.local/bin to your PATH:"
-echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
-echo "  # Add this to your ~/.bashrc, ~/.zshrc, or ~/.profile" 
+echo "  export PATH="\$HOME/.local/bin:\$PATH""
+echo "  # Add this to your ~/.bashrc, ~/.zshrc, or ~/.profile"

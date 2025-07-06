@@ -7,16 +7,22 @@ from pathlib import Path
 # Add the loomlib directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent / "loomlib"))
 
+# Import emoji utilities
+from emojis import get_emoji_manager
+
+# Get emoji manager
+emoji_mgr = get_emoji_manager()
+
 def test_imports():
     """Test that all modules can be imported."""
     try:
         from config import ConfigManager
         from git import GitManager
         from repo_manager import RepoManager
-        print("✅ All modules imported successfully")
+        print(f"{emoji_mgr.get_status('success')} All modules imported successfully")
         return True
     except ImportError as e:
-        print(f"❌ Import error: {e}")
+        print(f"{emoji_mgr.get_status('error')} Import error: {e}")
         return False
 
 def test_config():
@@ -27,15 +33,15 @@ def test_config():
         
         # Test loading defaults
         defaults = config.load_defaults()
-        print(f"✅ Defaults loaded: {len(defaults)} keys")
+        print(f"{emoji_mgr.get_status('success')} Defaults loaded: {len(defaults)} keys")
         
         # Test loading repos
         repos = config.load_repos()
-        print(f"✅ Repos loaded: {len(repos.get('repos', []))} repositories")
+        print(f"{emoji_mgr.get_status('success')} Repos loaded: {len(repos.get('repos', []))} repositories")
         
         return True
     except Exception as e:
-        print(f"❌ Config test failed: {e}")
+        print(f"{emoji_mgr.get_status('error')} Config test failed: {e}")
         return False
 
 def test_git():
@@ -48,14 +54,14 @@ def test_git():
         import subprocess
         result = subprocess.run(['git', '--version'], capture_output=True, text=True)
         if result.returncode == 0:
-            print(f"✅ Git available: {result.stdout.strip()}")
+            print(f"{emoji_mgr.get_status('success')} Git available: {result.stdout.strip()}")
         else:
-            print("❌ Git not available")
+            print(f"{emoji_mgr.get_status('error')} Git not available")
             return False
         
         return True
     except Exception as e:
-        print(f"❌ Git test failed: {e}")
+        print(f"{emoji_mgr.get_status('error')} Git test failed: {e}")
         return False
 
 def test_repo_manager():
@@ -69,15 +75,15 @@ def test_repo_manager():
         git = GitManager()
         repo_manager = RepoManager(config, git)
         
-        print("✅ RepoManager initialized successfully")
+        print(f"{emoji_mgr.get_status('success')} RepoManager initialized successfully")
         return True
     except Exception as e:
-        print(f"❌ RepoManager test failed: {e}")
+        print(f"{emoji_mgr.get_status('error')} RepoManager test failed: {e}")
         return False
 
 def main():
     """Run all tests."""
-    print("🧵 Testing Loom Setup")
+    print(f"{emoji_mgr.get_special('loom')} Testing Loom Setup")
     print("=" * 30)
     
     tests = [
@@ -95,7 +101,7 @@ def main():
         if test_func():
             passed += 1
         else:
-            print(f"❌ {test_name} failed")
+            print(f"{emoji_mgr.get_status('error')} {test_name} failed")
     
     print(f"\n📊 Results: {passed}/{total} tests passed")
     
@@ -103,7 +109,7 @@ def main():
         print("🎉 All tests passed! Loom is ready to use.")
         return 0
     else:
-        print("⚠️  Some tests failed. Please check the setup.")
+        print(f"{emoji_mgr.get_status('warning')} Some tests failed. Please check the setup.")
         return 1
 
 if __name__ == "__main__":

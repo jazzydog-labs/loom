@@ -25,12 +25,14 @@ from loomlib.config import ConfigManager
 from loomlib.git import GitManager
 from loomlib.repo_manager import RepoManager
 from loomlib.color_manager import ColorManager
+from loomlib.emojis import get_emoji_manager
 
 # Initialize managers
 config_manager = ConfigManager()
 git_manager = GitManager()
 repo_manager = RepoManager(config_manager, git_manager)
 color_manager = ColorManager()
+emoji_mgr = get_emoji_manager()
 
 def main():
     """Main entry point."""
@@ -79,7 +81,7 @@ def show_details():
         console.print(progress_text, markup=True, end="\r")
         details[name] = repo_manager.get_detailed_status(name)
         time.sleep(0.05)
-    completed_text = color_manager.format_text("Detailed Status: ✅ completed", "progress")
+    completed_text = color_manager.format_text(f"Detailed Status: {emoji_mgr.get_status('success')} completed", "progress")
     console.print(completed_text, markup=True)
     console.print(separator, markup=True)
     # Print repo details after spinner
@@ -139,7 +141,7 @@ def display_pull_results(results: dict):
     table.add_column("Status", style="magenta")
     
     for name, success in results.items():
-        status = "✅ Success" if success else "❌ Failed"
+        status = f"{emoji_mgr.get_status('success')} Success" if success else f"{emoji_mgr.get_status('error')} Failed"
         color = "green" if success else "red"
         table.add_row(name, f"[{color}]{status}[/{color}]")
     
@@ -281,26 +283,30 @@ def display_detailed_status(details: dict):
         
         return stats
     
-    # Configuration for emojis
+    # Import emoji utilities
+    from loomlib.emojis import get_emoji_manager
+    
+    # Get emoji configuration
+    emoji_mgr = get_emoji_manager()
     CFG = {
-        'folder': '📁',
+        'folder': emoji_mgr.get_files('folder'),
         'dir_sep': '❯',
         'root': '.',
-        'added': '➕',
-        'modified': '✏️',
-        'deleted': '🗑️',
-        'renamed': '🔄',
+        'added': emoji_mgr.get_git('added'),
+        'modified': emoji_mgr.get_git('modified'),
+        'deleted': emoji_mgr.get_git('deleted'),
+        'renamed': emoji_mgr.get_git('renamed'),
         'copied': '📋',
-        'unmerged': '⚠️',
-        'untracked': '❓',
+        'unmerged': emoji_mgr.get_git('unmerged'),
+        'untracked': emoji_mgr.get_git('untracked'),
         'ignored': '🚫',
-        'stash': '📦',
+        'stash': emoji_mgr.get_git('staged'),
         'clean': '✨',
         'branch': '🌿',
         'file_circle': '🖊️',
-        'success': '✅',
-        'warning': '⚠️',
-        'error': '❌',
+        'success': emoji_mgr.get_status('success'),
+        'warning': emoji_mgr.get_status('warning'),
+        'error': emoji_mgr.get_status('error'),
     }
     
     max_filename_length = get_max_filename_length(details)
@@ -415,7 +421,7 @@ def init(
     console.print("Creating directory structure...")
     success = repo_manager.create_directory_structure(dev_root)
     if not success:
-        console.print("❌ Failed to create directories")
+        console.print(f"{emoji_mgr.get_status('error')} Failed to create directories")
         return
     
     repo_manager.set_dev_root(dev_root)
@@ -424,22 +430,22 @@ def init(
     clone_results = repo_manager.clone_missing_repos(dev_root)
     success_count = sum(clone_results.values())
     total_count = len(clone_results)
-    console.print(f"✅ Cloned {success_count}/{total_count} repositories")
+    console.print(f"{emoji_mgr.get_status('success')} Cloned {success_count}/{total_count} repositories")
     
     console.print("Moving loom to foundry directory...")
     move_success = repo_manager.move_loom_to_foundry(dev_root)
     if move_success:
-        console.print("✅ Loom moved to foundry directory")
+        console.print(f"{emoji_mgr.get_status('success')} Loom moved to foundry directory")
     else:
-        console.print("⚠️  Loom already in place")
+        console.print(f"{emoji_mgr.get_status('warning')} Loom already in place")
     
     if bootstrap:
         console.print("Running foundry-bootstrap...")
         bootstrap_success = repo_manager.bootstrap_foundry(dev_root)
         if bootstrap_success:
-            console.print("✅ Bootstrap completed")
+            console.print(f"{emoji_mgr.get_status('success')} Bootstrap completed")
         else:
-            console.print("❌ Bootstrap failed")
+            console.print(f"{emoji_mgr.get_status('error')} Bootstrap failed")
     
     console.print(f"\n🎉 Foundry ecosystem initialized at {dev_root}/foundry")
     console.print("All repositories have been cloned and organized.")
