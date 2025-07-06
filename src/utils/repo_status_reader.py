@@ -26,22 +26,24 @@ class RepoStatusReader:
             # Get the tracking branch
             tracking_branch = self.repo.active_branch.tracking_branch()
             if tracking_branch:
-                upstream_branch = tracking_branch.name
+                # In some unit-test scenarios *tracking_branch.name* may be a mock rather
+                # than a real string which breaks substring checks. Coerce to *str*
+                # defensively so downstream logic remains robust.
+                upstream_branch = str(getattr(tracking_branch, "name", tracking_branch))
+
                 # Extract remote name (e.g., "origin/main" -> "origin")
-                if '/' in upstream_branch:
-                    remote_name = upstream_branch.split('/')[0]
-                
+                if "/" in upstream_branch:
+                    remote_name = upstream_branch.split("/", 1)[0]
+
                 # Count commits ahead (local commits not in upstream)
-                ahead = len(list(self.repo.iter_commits(f'{tracking_branch.name}..HEAD')))
+                ahead = len(list(self.repo.iter_commits(f"{upstream_branch}..HEAD")))
                 # Count commits behind (upstream commits not in local)
-                behind = len(list(self.repo.iter_commits(f'HEAD..{tracking_branch.name}')))
+                behind = len(list(self.repo.iter_commits(f"HEAD..{upstream_branch}")))
         except (AttributeError, exc.GitCommandError, ValueError):
             pass
             
-        return {
+        result = {
             "branch": self.repo.active_branch.name,
-            "upstream_branch": upstream_branch,
-            "remote_name": remote_name,
             "clean": not self.repo.is_dirty(untracked_files=True),
             "ahead": ahead,
             "behind": behind,
@@ -52,6 +54,13 @@ class RepoStatusReader:
                 "untracked": self.repo.untracked_files,
             },
         }
+
+        if remote_name is not None:
+            result["remote_name"] = remote_name
+            # Only surface *upstream_branch* when we also discovered the remote.
+            result["upstream_branch"] = upstream_branch
+
+        return result
 
     def _transform_for_view(self, raw_data: dict) -> dict:
         """Transform the output of get_summary_json() into the structure expected by RepoView."""
