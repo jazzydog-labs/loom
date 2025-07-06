@@ -45,6 +45,8 @@ operations to `LoomController` located in `src/controllers/loom_controller.py`.
 The controller coordinates the managers in `src/core` and implements the actual
 command logic. This separation keeps the entry point small and the logic
 testable.
+This repository now includes a skeleton DDD architecture under `src/` with packages like `app`, `services`, `domain`, `infra`, `plugins`, and `events` for future expansion.
+
 
 ## Contributing
 
