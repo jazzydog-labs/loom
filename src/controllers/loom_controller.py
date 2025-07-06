@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, cast
 import contextlib
 import io
 import json
@@ -25,6 +25,7 @@ from ..utils.emojis import get_emoji_manager
 from ..utils.repo_status_reader import RepoStatusReader
 from ..views.repo_view import RepoView
 from ..utils.worker_pool import map_parallel
+from ..infra.todo_manager import TodoManager
 
 
 class LoomController:
@@ -270,6 +271,10 @@ class LoomController:
                     return
 
         repo_paths = self.repos.get_repo_paths()
+        if selected_repo is None:
+            self.console.print("No repository selected.")
+            return
+
         repo_path = repo_paths[selected_repo]
         context = self._get_repo_context(selected_repo, repo_path)
         if output_command:
@@ -505,5 +510,65 @@ class LoomController:
             return {"message": message, "context": context}
         except Exception as e:  # pragma: no cover - defensive
             return {"message": "Error getting repository context", "context": str(e)}
+
+    def todos(self, root: Optional[str] = None) -> None:
+        """Collect and display TODO items grouped by file and parent tasks.
+
+        Args:
+            root: Optional path to scan. Defaults to the configured dev_root or current working directory.
+        """
+        # Resolve root directory -------------------------------------------------
+        root_path = Path(root).expanduser().resolve() if root else Path.cwd()
+
+        # Collect todos via JSON interface --------------------------------------
+        manager = TodoManager(root_path)
+        try:
+            todos_raw_json = cast(str, manager.collect(as_json=True))
+            todos = json.loads(todos_raw_json)
+        except Exception as exc:  # pragma: no cover – defensive
+            self.console.print(f"[red]Error collecting TODOs:[/red] {exc}")
+            return
+
+        # Filter to pending tasks ----------------------------------------------
+        pending_todos = [t for t in todos if t.get("status") != "done"]
+        if not pending_todos:
+            self.console.print("[green]No pending TODOs found! 🎉[/green]")
+            return
+
+        # Group by file ---------------------------------------------------------
+        from collections import defaultdict
+        file_groups: defaultdict[str, list[dict]] = defaultdict(list)
+        for task in pending_todos:
+            file_groups[task["path"]].append(task)
+
+        # Build rich tree -------------------------------------------------------
+        from rich.tree import Tree
+        from rich.text import Text
+
+        root_tree = Tree(Text("Pending TODOs", style="bold magenta"))
+
+        def _ensure_child(parent: Tree, label: str) -> Tree:
+            """Return existing child with *label* or create a new one."""
+            for child in parent.children:
+                # child.label may be Text or str
+                if str(child.label) == label:
+                    return child
+            return parent.add(label)
+
+        for path in sorted(file_groups.keys()):
+            file_node = root_tree.add(Text(path, style="bold cyan"))
+            # Sort tasks by line number for determinism
+            for task in sorted(file_groups[path], key=lambda t: t.get("line", 0)):
+                parents: list[str] = task.get("parent_task", [])  # type: ignore[arg-type]
+                current_node = file_node
+                for parent_desc in parents:
+                    current_node = _ensure_child(current_node, parent_desc)
+                # Final leaf: actual task description
+                desc = task["description"]
+                line_no = task.get("line")
+                note = f"{desc} (L{line_no})" if line_no else desc
+                current_node.add(note)
+
+        self.console.print(root_tree)
 
 __all__ = ["LoomController"]

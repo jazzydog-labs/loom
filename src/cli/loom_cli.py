@@ -64,3 +64,13 @@ def sync(
 ) -> None:
     """Sync clean repositories (git pull) in parallel."""
     controller.sync(push=push)
+
+
+@app.command()
+def todos(
+    root: Optional[str] = typer.Option(
+        None, "--root", "-r", help="Root directory to scan for TODOs"
+    ),
+) -> None:
+    """Display pending TODOs grouped by file and hierarchy."""
+    controller.todos(root)

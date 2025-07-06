@@ -18,6 +18,8 @@ from ..utils.emojis import get_emoji_manager
 from ..utils.color_manager import ColorManager
 
 
+# todo: example todo in code
+
 class BufferedRepoView:
     """Buffered version of RepoView that captures output instead of printing directly."""
     

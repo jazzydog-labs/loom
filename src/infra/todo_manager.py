@@ -49,7 +49,7 @@ _MD_CHECKBOX = re.compile(r"^\s*-\s*\[\s*([xX ])?\s*\]\s*(.*)")
 #   todo          – literal "todo" (case-insensitive)
 #   :?            – optional colon
 #   \s*(.*)       – capture description
-_CODE_TODO = re.compile(r"^\s*(?:#|//)todo:?\s*(.*)", re.IGNORECASE)
+_CODE_TODO = re.compile(r"^\s*(?:#|//) todo:?\s*(.*)", re.IGNORECASE)
 
 __all__ = ["TodoManager"]
 
