@@ -1,13 +1,12 @@
-# workflow stuff
-- 
+# TODO
 
+## Workflow
+- [ ] Document desired workflows
 
-## refactoring
-- extract out clean json interface
-- jobs in parallel for every git repo.
-- extract out colors
-    - is there some way to specify a color schema?
-    - is there some way to specify colors stuff declaratively rather than with tags?
-- extract config to file rather than in python
-
-## 
+## Refactoring
+- Extract a clean JSON interface
+- Run jobs in parallel for each git repository
+- Extract color configuration
+  - Provide a color schema
+  - Allow declarative color selection
+- Move configuration settings from Python into files
