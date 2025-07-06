@@ -397,9 +397,6 @@ class LoomController:
                 elif info["status"] == "failed":
                     renderables.append(Text.from_markup(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}"))
             
-            # Add a newline at the end for better visual separation from terminal prompt
-            renderables.append(Text(""))
-            
             # Create a proper renderable with line breaks
             return Group(*renderables)
 
@@ -426,6 +423,9 @@ class LoomController:
                         repo_status[repo_name]["message"] = f"error: {str(e)}"
                         live.update(_create_status_display())
 
+        # Add newline after Live context exits for proper visual separation from terminal prompt
+        self.console.print()
+        
         # Summary is now displayed live at the top - no need for additional summary
 
     # ------------------------------------------------------------------
