@@ -397,6 +397,9 @@ class LoomController:
                 elif info["status"] == "failed":
                     renderables.append(Text.from_markup(f"{self.emoji.get_status('error')} Failed to sync {name}: {info['message']}"))
             
+            # Add a newline at the end for better visual separation from terminal prompt
+            renderables.append(Text(""))
+            
             # Create a proper renderable with line breaks
             return Group(*renderables)
 
