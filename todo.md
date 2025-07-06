@@ -20,7 +20,8 @@
 ## Architecture Skeleton
 - [x] Integrate new `cli` package with Typer commands
 - [x] Wire `app.LoomController` into existing CLI
-- [ ] Flesh out domain aggregates (`Repo`, `Foundry`, `FreezeSnapshot`)
+- [x] Flesh out domain aggregates (`Repo`, `Foundry`, `FreezeSnapshot`)
+- [ ] Use existing framework to flesh out a minimal solution for getting all repos to `git pull` in parallel. This may require using GitManager and utils.worker_pool map_parallel
 - [ ] Implement services
   - [ ] `RepoStatusSvc`
   - [ ] `BulkExecSvc`

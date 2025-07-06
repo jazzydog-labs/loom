@@ -18,6 +18,7 @@ from ..core.repo_manager import RepoManager
 from ..utils.emojis import get_emoji_manager
 from ..utils.repo_status_reader import RepoStatusReader
 from ..views.repo_view import RepoView
+from ..utils.worker_pool import map_parallel
 
 
 class LoomController:
@@ -265,6 +266,71 @@ class LoomController:
                 "context": context.get("context", "Repository loaded successfully"),
             }
             print(json.dumps(result, indent=2))
+
+    # ------------------------------------------------------------------
+    # Repository sync operation
+    # ------------------------------------------------------------------
+    def sync(self) -> None:
+        """Pull latest changes for all clean repositories in parallel.
+
+        A repository is considered safe to sync if:
+        1. It has no uncommitted changes (status == "clean"), and
+        2. It is not ahead of its upstream (local commits to push == 0).
+
+        Dirty repositories or those ahead of origin are skipped and reported.
+        """
+
+        repo_paths = self.repos.get_repo_paths()
+        if not repo_paths:
+            self.console.print("No repositories configured – run 'loom init' first.")
+            return
+
+        def _pull_if_clean(item):
+            name, path = item
+            from pathlib import Path
+
+            path_obj = Path(path)
+            status = self.git.get_repo_status(path_obj)
+
+            # Skip if repo has local modifications or commits ahead of upstream
+            if status.get("status") != "clean":
+                return (name, "skipped", "dirty working tree")
+
+            if status.get("ahead") and status["ahead"] != "0":
+                return (name, "skipped", f"{status['ahead']} commit(s) ahead")
+
+            # Perform git pull
+            success, had_changes = self.git.pull_repo(path_obj)
+            if success:
+                if had_changes:
+                    return (name, "pulled", "pulled changes from upstream")
+                else:
+                    return (name, "up_to_date", "already up to date")
+            else:
+                return (name, "failed", "git pull error")
+
+        # Execute pulls in parallel
+        results = map_parallel(_pull_if_clean, list(repo_paths.items()))
+
+        pulled = [r for r in results if r[1] == "pulled"]
+        up_to_date = [r for r in results if r[1] == "up_to_date"]
+        skipped = [r for r in results if r[1] == "skipped"]
+        failed = [r for r in results if r[1] == "failed"]
+
+        # Display per-repo outcome
+        for name, outcome, reason in results:
+            if outcome == "pulled":
+                self.console.print(f"{self.emoji.get_status('success')} Synced [bold]{name}[/bold]: {reason}")
+            elif outcome == "up_to_date":
+                self.console.print(f"{self.emoji.get_status('info')} {name}: {reason}")
+            elif outcome == "skipped":
+                self.console.print(f"{self.emoji.get_status('warning')} Skipped {name}: {reason}")
+            else:
+                self.console.print(f"{self.emoji.get_status('error')} Failed to sync {name}: {reason}")
+
+        # Summary
+        self.console.print("\n[bold cyan]Sync summary:[/bold cyan]")
+        self.console.print(f"Pulled: {len(pulled)} | Up to date: {len(up_to_date)} | Skipped: {len(skipped)} | Failed: {len(failed)}")
 
     # ------------------------------------------------------------------
     # Helper methods

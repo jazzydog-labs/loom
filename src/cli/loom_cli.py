@@ -52,3 +52,9 @@ def go(
 ) -> None:
     """Enter a repository with context loaded."""
     controller.go(repo_name, output_command)
+
+
+@app.command()
+def sync() -> None:
+    """Sync clean repositories (git pull) in parallel."""
+    controller.sync()

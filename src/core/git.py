@@ -54,8 +54,14 @@ class GitManager:
             logger.error(f"Error cloning {url}: {e}")
             return False
     
-    def pull_repo(self, path: Path) -> bool:
-        """Pull latest changes for a repository."""
+    def pull_repo(self, path: Path) -> Tuple[bool, bool]:
+        """Pull latest changes for a repository.
+        
+        Returns:
+            Tuple of (success, had_changes) where:
+            - success: True if git pull succeeded
+            - had_changes: True if changes were actually pulled from upstream
+        """
         try:
             cmd = ["git", "pull"]
             result = subprocess.run(
@@ -67,18 +73,22 @@ class GitManager:
             )
             
             if result.returncode == 0:
+                # Check if changes were actually pulled
+                output = result.stdout.strip()
+                had_changes = not ("Already up to date" in output or "Already up-to-date" in output)
+                
                 logger.info(f"Successfully pulled {path}")
-                return True
+                return True, had_changes
             else:
                 logger.error(f"Failed to pull {path}: {result.stderr}")
-                return False
+                return False, False
                 
         except subprocess.TimeoutExpired:
             logger.error(f"Timeout pulling {path}")
-            return False
+            return False, False
         except Exception as e:
             logger.error(f"Error pulling {path}: {e}")
-            return False
+            return False, False
     
     def get_repo_status(self, path: Path) -> Dict[str, str]:
         """Get the status of a git repository."""
