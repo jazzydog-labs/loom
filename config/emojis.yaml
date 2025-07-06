@@ -14,14 +14,32 @@ git:
   deleted: "🗑️"
   added: "➕"
   renamed: "🔄"
+  copied: "📋"
   unmerged: "⚠️"
   untracked: "❓"
   staged: "📦"
+  ignored: "🚫"
 
 # File and directory emojis
 files:
   folder: "📁"
   file: "📄"
+
+# UI and navigation emojis
+ui:
+  dir_sep: "❯"
+  arrow_right: "→"
+  arrow_left: "←"
+  checkmark: "✓"
+  cross: "✗"
+
+# Git workflow emojis
+git_workflow:
+  branch: "🌿"
+  clean: "✨"
+  staged_edit: "🖊️"
+  ahead: "▲"
+  behind: "▼"
 
 # Special purpose emojis
 special:

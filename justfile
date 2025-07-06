@@ -1,4 +1,4 @@
 # Justfile for loom project
 
 test:
-    pytest 
+    python -m pytest 
