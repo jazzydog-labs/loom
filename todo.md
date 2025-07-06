@@ -11,6 +11,12 @@
   - Allow declarative color selection
 - Move configuration settings from Python into files
 
+## Bootstrap
+- [ ] Make `foundry-bootstrap/bootstrap.sh` detect unsupported environments and
+      skip Homebrew/pyenv installation when running inside a minimal container.
+      This will allow `loom init` to succeed in CI or Docker without manual
+      intervention.
+
 ## Architecture Skeleton
 - [ ] Integrate new `cli` package with Typer commands
 - [ ] Wire `app.LoomController` into existing CLI
