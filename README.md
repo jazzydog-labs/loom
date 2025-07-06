@@ -8,8 +8,15 @@ coordinates commands, and keeps your development directory organized.
 ```bash
 git clone git@github.com:jazzydog-labs/loom.git
 cd loom
-python3 loom.py init
+pip install -r requirements.txt
+python3 loom.py init --dev-root ~/dev     # add --no-bootstrap to skip extra setup
 ```
+
+`loom init` clones all repositories listed in `config/repos.yaml` and then
+attempts to run the `foundry-bootstrap/bootstrap.sh` script.  The bootstrapper
+installs system wide tools (Homebrew, pyenv, etc.) which may not run in
+restricted environments.  If the bootstrap step fails you can re-run
+`bootstrap.sh` manually or disable it via `--no-bootstrap`.
 
 ## Basic Commands
 
