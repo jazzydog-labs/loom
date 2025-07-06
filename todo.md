@@ -4,27 +4,13 @@
 - [x] Create a json-based interface to get all todos in a directory, from ./todo.md, and comments with `#todo:` in all code, for a particular repo. this should go in src/infra/todo_manager.py
 - [x] Document desired workflows
 
-## Refactoring
-- Extract a clean JSON interface
-- Run jobs in parallel for each git repository
-- Extract color configuration
-  - Provide a color schema
-  - Allow declarative color selection
-- Move configuration settings from Python into files
-
-## Bootstrap
-- [ ] Make `foundry-bootstrap/bootstrap.sh` detect unsupported environments and
-      skip Homebrew/pyenv installation when running inside a minimal container.
-      This will allow `loom init` to succeed in CI or Docker without manual
-      intervention.
-
 ## Architecture Skeleton
 - [x] Integrate new `cli` package with Typer commands
 - [x] Wire `app.LoomController` into existing CLI
 - [x] Flesh out domain aggregates (`Repo`, `Foundry`, `FreezeSnapshot`)
-- [ ] Use existing framework to flesh out a minimal solution for getting all repos to `git pull` in parallel. This may require using GitManager and utils.worker_pool map_parallel
+- [x] Use existing framework to flesh out a minimal solution for getting all repos to `git pull` in parallel. This may require using GitManager and utils.worker_pool map_parallel
 - [ ] Implement services
-  - [ ] `RepoStatusSvc`
+  - [ ] Move RepoStatusReader functionality to `RepoStatusSvc` (and rename `RepoStatusSvc` to `RepoStatusService`), making sure everything works (and tests pass).
   - [ ] `BulkExecSvc`
   - [ ] `FreezeSvc`
   - [ ] `StashCoordinator`
