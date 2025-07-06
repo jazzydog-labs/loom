@@ -39,6 +39,14 @@ foundry/
 └── loom/
 ```
 
+## Architecture
+
+`src/main.py` contains only the Typer CLI definitions and forwards all
+operations to `LoomController` located in `src/controllers/loom_controller.py`.
+The controller coordinates the managers in `src/core` and implements the actual
+command logic. This separation keeps the entry point small and the logic
+testable.
+
 ## Development
 
 Run tests with:
