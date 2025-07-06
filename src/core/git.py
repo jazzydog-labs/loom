@@ -54,15 +54,31 @@ class GitManager:
             logger.error(f"Error cloning {url}: {e}")
             return False
     
-    def pull_repo(self, path: Path) -> Tuple[bool, bool]:
+    def pull_repo(self, path: Path) -> Tuple[bool, bool, int]:
         """Pull latest changes for a repository.
         
         Returns:
-            Tuple of (success, had_changes) where:
+            Tuple of (success, had_changes, commits_pulled) where:
             - success: True if git pull succeeded
             - had_changes: True if changes were actually pulled from upstream
+            - commits_pulled: Number of commits pulled from upstream
         """
         try:
+            # Get current HEAD before pulling to count commits pulled
+            pre_pull_head = None
+            try:
+                head_result = subprocess.run(
+                    ["git", "rev-parse", "HEAD"],
+                    cwd=path,
+                    capture_output=True,
+                    text=True,
+                    timeout=self.timeout
+                )
+                if head_result.returncode == 0:
+                    pre_pull_head = head_result.stdout.strip()
+            except Exception:
+                pass  # If we can't get HEAD, we'll just not count commits
+            
             cmd = ["git", "pull"]
             result = subprocess.run(
                 cmd, 
@@ -77,18 +93,34 @@ class GitManager:
                 output = result.stdout.strip()
                 had_changes = not ("Already up to date" in output or "Already up-to-date" in output)
                 
+                commits_pulled = 0
+                if had_changes and pre_pull_head:
+                    # Count commits between the old HEAD and new HEAD
+                    try:
+                        count_result = subprocess.run(
+                            ["git", "rev-list", "--count", f"{pre_pull_head}..HEAD"],
+                            cwd=path,
+                            capture_output=True,
+                            text=True,
+                            timeout=self.timeout
+                        )
+                        if count_result.returncode == 0:
+                            commits_pulled = int(count_result.stdout.strip())
+                    except Exception:
+                        pass  # If we can't count, we'll just show that changes were pulled
+                
                 logger.info(f"Successfully pulled {path}")
-                return True, had_changes
+                return True, had_changes, commits_pulled
             else:
                 logger.error(f"Failed to pull {path}: {result.stderr}")
-                return False, False
+                return False, False, 0
                 
         except subprocess.TimeoutExpired:
             logger.error(f"Timeout pulling {path}")
-            return False, False
+            return False, False, 0
         except Exception as e:
             logger.error(f"Error pulling {path}: {e}")
-            return False, False
+            return False, False, 0
     
     def push_repo(self, path: Path) -> Tuple[bool, bool]:
         """Push local commits to upstream.

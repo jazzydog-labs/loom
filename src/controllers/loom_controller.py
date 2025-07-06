@@ -321,7 +321,7 @@ class LoomController:
                 return (name, "skipped", f"diverged: {ahead} ahead, {behind} behind")
 
             # Perform git pull
-            pull_success, pull_had_changes = self.git.pull_repo(path_obj)
+            pull_success, pull_had_changes, commits_pulled = self.git.pull_repo(path_obj)
             if not pull_success:
                 return (name, "failed", "git pull error")
 
@@ -331,22 +331,26 @@ class LoomController:
                 if not push_success:
                     return (name, "failed", "git push error")
                 
-                # Format commit count message
-                commit_count = int(ahead)
-                commit_word = "commit" if commit_count == 1 else "commits"
+                # Format commit count messages
+                push_commit_count = int(ahead)
+                push_commit_word = "commit" if push_commit_count == 1 else "commits"
                 
                 if pull_had_changes and push_had_changes:
-                    return (name, "pulled_pushed", f"pulled changes and pushed {commit_count} {commit_word}")
+                    # Format pull commit count message
+                    pull_commit_word = "commit" if commits_pulled == 1 else "commits"
+                    return (name, "pulled_pushed", f"pulled {commits_pulled} {pull_commit_word} and pushed {push_commit_count} {push_commit_word}")
                 elif pull_had_changes:
-                    return (name, "pulled_pushed", f"pulled changes, no {commit_word} to push")
+                    pull_commit_word = "commit" if commits_pulled == 1 else "commits"
+                    return (name, "pulled_pushed", f"pulled {commits_pulled} {pull_commit_word}, no {push_commit_word} to push")
                 elif push_had_changes:
-                    return (name, "pulled_pushed", f"pushed {commit_count} {commit_word}")
+                    return (name, "pulled_pushed", f"pushed {push_commit_count} {push_commit_word}")
                 else:
                     return (name, "up_to_date", "already up to date")
             else:
                 # Regular pull-only result
                 if pull_had_changes:
-                    return (name, "pulled", "pulled changes from upstream")
+                    pull_commit_word = "commit" if commits_pulled == 1 else "commits"
+                    return (name, "pulled", f"pulled {commits_pulled} {pull_commit_word} from upstream")
                 else:
                     return (name, "up_to_date", "already up to date")
 
