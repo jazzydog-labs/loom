@@ -178,24 +178,57 @@ class LoomController:
                             )
                         return
             else:
-                best_match = process.extractOne(repo_name, repo_names, scorer=fuzz.ratio)
-                if best_match and best_match[1] >= 40:
-                    selected_repo = best_match[0]
-                else:
-                    if output_command:
-                        print(f"echo 'Repository {repo_name} not found'")
+                # No prefix matches. Try an interactive fuzzy finder across all repos
+                tried_fzf_global = False
+                try:
+                    subprocess.run(["fzf", "--version"], capture_output=True, check=True)
+                    tried_fzf_global = True
+                    fzf_cmd = [
+                        "fzf",
+                        "--prompt",
+                        "Select repository: ",
+                        "--height",
+                        "40%",
+                        "--query",
+                        repo_name,
+                    ]
+                    result = subprocess.run(
+                        fzf_cmd,
+                        input="\n".join(repo_names),
+                        capture_output=True,
+                        text=True,
+                    )
+                    if result.returncode == 0 and result.stdout.strip():
+                        selected_repo = result.stdout.strip()
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    # fzf not available or failed; will fall back to fuzzy matching below
+                    pass
+
+                # If interactive selection didn't yield a repo, fall back to best fuzzy match
+                if not selected_repo:
+                    best_match = process.extractOne(repo_name, repo_names, scorer=fuzz.ratio)
+                    if best_match and best_match[1] >= 40:
+                        selected_repo = best_match[0]
                     else:
-                        print(
-                            json.dumps(
-                                {
-                                    "error": f"Repository '{repo_name}' not found",
-                                    "directory": None,
-                                    "message": None,
-                                    "context": None,
-                                }
+                        # Provide clearer guidance if fzf wasn't attempted
+                        if output_command:
+                            print(f"echo 'Repository {repo_name} not found'")
+                        else:
+                            error_msg = (
+                                "fzf is not installed. Please install it or run foundry-bootstrap/bootstrap.sh "
+                                "to install all dependencies." if not tried_fzf_global else f"Repository '{repo_name}' not found"
                             )
-                        )
-                    return
+                            print(
+                                json.dumps(
+                                    {
+                                        "error": error_msg,
+                                        "directory": None,
+                                        "message": None,
+                                        "context": None,
+                                    }
+                                )
+                            )
+                        return
         else:
             try:
                 subprocess.run(["fzf", "--version"], capture_output=True, check=True)
