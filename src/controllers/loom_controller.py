@@ -10,13 +10,11 @@ import json
 import subprocess
 
 from rich.console import Console
-from rich.table import Table
 from rich.prompt import Prompt, Confirm
 
 from ..core.config import ConfigManager
 from ..core.git import GitManager
 from ..core.repo_manager import RepoManager
-from ..utils.color_manager import ColorManager
 from ..utils.emojis import get_emoji_manager
 from ..utils.repo_status_reader import RepoStatusReader
 from ..views.repo_view import RepoView
@@ -30,7 +28,6 @@ class LoomController:
         self.config = ConfigManager()
         self.git = GitManager()
         self.repos = RepoManager(self.config, self.git)
-        self.colors = ColorManager()
         self.emoji = get_emoji_manager()
 
     # ------------------------------------------------------------------
@@ -54,10 +51,6 @@ class LoomController:
     # ------------------------------------------------------------------
     # Core operations
     # ------------------------------------------------------------------
-    def show_status(self) -> None:
-        statuses = self.repos.get_all_status()
-        self._display_status_table(statuses)
-
     def show_details(self) -> None:
         repos_config = self.config.load_repos()
         repos = repos_config.get("repos", [])
@@ -128,11 +121,6 @@ class LoomController:
             f"\n🎉 Foundry ecosystem initialized at {dev_root}/foundry"
         )
         self.console.print("All repositories have been cloned and organized.")
-
-    def pull_all(self) -> None:
-        self.console.print("Pulling repositories...")
-        results = self.repos.pull_all_repos()
-        self._display_pull_results(results)
 
     def go(self, repo_name: Optional[str], output_command: bool = False) -> None:
         from fuzzywuzzy import fuzz, process
@@ -257,45 +245,6 @@ class LoomController:
         return Prompt.ask(
             "Enter your development root directory", default="~/dev/jazzydog-labs"
         )
-
-    def _display_status_table(self, statuses: dict) -> None:
-        table = Table(title="Repository Status")
-        table.add_column("Repository", style="cyan")
-        table.add_column("Status", style="magenta")
-        table.add_column("Branch", style="green")
-        table.add_column("Ahead/Behind", style="yellow")
-        table.add_column("Path", style="dim")
-        for name, status in statuses.items():
-            status_color = {
-                "clean": "green",
-                "dirty": "red",
-                "missing": "red",
-                "not_git": "yellow",
-                "error": "red",
-            }.get(status["status"], "white")
-            ahead_behind = f"{status['ahead']}/{status['behind']}"
-            table.add_row(
-                name,
-                f"[{status_color}]{status['status']}[/{status_color}]",
-                status.get("branch", "N/A"),
-                ahead_behind,
-                status["path"],
-            )
-        self.console.print(table)
-
-    def _display_pull_results(self, results: dict) -> None:
-        table = Table(title="Pull Results")
-        table.add_column("Repository", style="cyan")
-        table.add_column("Status", style="magenta")
-        for name, success in results.items():
-            status = (
-                f"{self.emoji.get_status('success')} Success"
-                if success
-                else f"{self.emoji.get_status('error')} Failed"
-            )
-            color = "green" if success else "red"
-            table.add_row(name, f"[{color}]{status}[/{color}]")
-        self.console.print(table)
 
     def _get_repo_context(self, repo_name: str, repo_path: str) -> dict:
         try:

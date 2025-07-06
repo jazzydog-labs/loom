@@ -10,17 +10,9 @@ import typer
 from rich.console import Console
 
 from .controllers import LoomController
-from .commands.git.commands import create_git_app
-
 console = Console()
 app = typer.Typer()
 controller = LoomController(console=console)
-
-do_app = typer.Typer(
-    help="Run a named operation in all repositories (e.g., test, build, docs, git, etc)"
-)
-do_app.add_typer(create_git_app(), name="git")
-app.add_typer(do_app, name="do")
 
 
 def main() -> None:
@@ -38,12 +30,6 @@ def init(
 ) -> None:
     """Initialize the foundry ecosystem."""
     controller.init(dev_root, bootstrap)
-
-
-@app.command()
-def pull_all() -> None:
-    """Pull latest changes for all repositories."""
-    controller.pull_all()
 
 
 @app.command()
