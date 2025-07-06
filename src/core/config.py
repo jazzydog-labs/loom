@@ -10,10 +10,11 @@ class ConfigManager:
     """Manages loom configuration including user config and repo definitions."""
     
     def __init__(self, config_dir: Optional[Path] = None):
-        self.config_dir = config_dir or Path(__file__).parent.parent / "config"
+        # Point to the root config directory
+        self.config_dir = config_dir or Path(__file__).parent.parent.parent / "config"
         self.defaults_file = self.config_dir / "defaults.yaml"
-        self.repos_file = Path(__file__).parent.parent / "repos.yaml"
-        self.user_config_file = Path(__file__).parent.parent / ".loomrc"
+        self.repos_file = self.config_dir / "repos.yaml"
+        self.user_config_file = self.config_dir / ".loomrc"
         self._repos = None
         self._user_config = None
         self._defaults = None
@@ -49,6 +50,8 @@ class ConfigManager:
                 dev_root = input("Enter your development root directory (e.g. ~/dev/jazzydog-labs): ").strip()
                 foundry_dir = input("Enter your foundry directory name (default: foundry): ").strip() or "foundry"
                 self._user_config = {"dev_root": dev_root, "foundry_dir": foundry_dir}
+                # Ensure the parent directory exists
+                self.user_config_file.parent.mkdir(parents=True, exist_ok=True)
                 with open(self.user_config_file, 'w') as f:
                     yaml.dump(self._user_config, f)
             else:
@@ -68,6 +71,8 @@ class ConfigManager:
     def set_user_config(self, dev_root: str, foundry_dir: str) -> None:
         """Set the user configuration."""
         self._user_config = {"dev_root": dev_root, "foundry_dir": foundry_dir}
+        # Ensure the parent directory exists
+        self.user_config_file.parent.mkdir(parents=True, exist_ok=True)
         with open(self.user_config_file, 'w') as f:
             yaml.dump(self._user_config, f)
     

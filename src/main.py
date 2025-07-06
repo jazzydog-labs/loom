@@ -21,11 +21,12 @@ console = Console()
 app = typer.Typer()
 
 # Import our modules
-from loomlib.config import ConfigManager
-from loomlib.git import GitManager
-from loomlib.repo_manager import RepoManager
-from loomlib.color_manager import ColorManager
-from loomlib.emojis import get_emoji_manager
+from .core.config import ConfigManager
+from .core.git import GitManager
+from .core.repo_manager import RepoManager
+from .utils.color_manager import ColorManager
+from .utils.emojis import get_emoji_manager
+from .commands.git.commands import create_git_app
 
 # Initialize managers
 config_manager = ConfigManager()
@@ -67,7 +68,8 @@ def show_status():
 def show_details():
     """Show detailed status of all repositories."""
     # Get all repository names
-    repo_names = list(repo_manager.get_repo_paths().keys())
+    repos_config = config_manager.load_repos()
+    repo_names = [repo['name'] for repo in repos_config.get('repos', [])]
     details = {}
     line = "═" * 50
     import time
@@ -284,7 +286,7 @@ def display_detailed_status(details: dict):
         return stats
     
     # Import emoji utilities
-    from loomlib.emojis import get_emoji_manager
+    from .utils.emojis import get_emoji_manager
     
     # Get emoji configuration
     emoji_mgr = get_emoji_manager()
@@ -400,8 +402,6 @@ def display_detailed_status(details: dict):
 # Create a separate app for the 'do' commands
 do_app = typer.Typer(help="Run a named operation in all repositories (e.g., test, build, docs, git, etc)")
 
-# Import git commands from the new location
-from commands.git.commands import create_git_app
 
 # Add the git app as a subcommand
 do_app.add_typer(create_git_app(), name="git")
@@ -456,11 +456,6 @@ def pull_all():
     console.print("Pulling repositories...")
     results = repo_manager.pull_all_repos()
     display_pull_results(results)
-
-@app.command()
-def status_all():
-    """Show status of all repositories."""
-    show_status()
 
 @app.command()
 def details():

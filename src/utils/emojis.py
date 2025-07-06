@@ -19,9 +19,9 @@ class EmojiManager:
             config_path: Path to the emoji config file. If None, uses default location.
         """
         if config_path is None:
-            # Default to config/emojis.yaml relative to this module
-            module_dir = Path(__file__).parent.parent
-            config_path = str(module_dir / "config" / "emojis.yaml")
+            # Default to config/emojis.yaml relative to project root
+            project_root = Path(__file__).parent.parent.parent
+            config_path = str(project_root / "config" / "emojis.yaml")
         
         self.config_path = Path(config_path)
         self._emojis = None

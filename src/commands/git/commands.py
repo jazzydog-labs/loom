@@ -4,12 +4,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# Add the loomlib directory to the path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "loomlib"))
-
-from loomlib.config import ConfigManager
-from loomlib.git import GitManager
-from loomlib.repo_manager import RepoManager
+from ...core.config import ConfigManager
+from ...core.git import GitManager
+from ...core.repo_manager import RepoManager
 
 try:
     from rich.console import Console

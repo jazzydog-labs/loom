@@ -314,43 +314,6 @@ class RepoManager:
         
         return new_items
     
-    def bootstrap_foundry(self, dev_root: str) -> bool:
-        """Run the foundry-bootstrap setup."""
-        foundry_bootstrap_path = Path(dev_root) / "foundry" / "foundry-bootstrap"
-        bootstrap_script = foundry_bootstrap_path / "bootstrap.sh"
-        
-        if not foundry_bootstrap_path.exists():
-            logger.error("foundry-bootstrap repository not found")
-            return False
-        
-        if not bootstrap_script.exists():
-            logger.error("bootstrap.sh script not found in foundry-bootstrap")
-            return False
-        
-        try:
-            # Make the script executable
-            bootstrap_script.chmod(0o755)
-            
-            # Run the bootstrap script
-            import subprocess
-            result = subprocess.run(
-                [str(bootstrap_script)],
-                cwd=foundry_bootstrap_path,
-                capture_output=True,
-                text=True
-            )
-            
-            if result.returncode == 0:
-                logger.info("Successfully ran foundry-bootstrap")
-                return True
-            else:
-                logger.error(f"Bootstrap failed: {result.stderr}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"Error running bootstrap: {e}")
-            return False
-    
     def add_all_files(self) -> Dict[str, Tuple[bool, str, str]]:
         """Add all files in all repositories."""
         return self._execute_git_command_in_all_repos(["add", "--all"])

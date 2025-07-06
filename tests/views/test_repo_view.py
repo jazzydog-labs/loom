@@ -8,8 +8,8 @@ import tempfile
 import shutil
 from pathlib import Path
 
-from views.repo_view import RepoView
-from utils.repo_status_reader import RepoStatusReader
+from src.views.repo_view import RepoView
+from src.utils.repo_status_reader import RepoStatusReader
 
 
 class TestRepoView(unittest.TestCase):
@@ -43,18 +43,18 @@ class TestRepoView(unittest.TestCase):
         view = RepoView()
         self.assertIsInstance(view.console, Console)
     
-    def test_emojis_configuration(self):
-        """Test that emojis are properly configured."""
-        expected_emojis = [
+    def test_symbols_configuration(self):
+        """Test that symbols are properly configured."""
+        expected_symbols = [
             'folder', 'dir_sep', 'root', 'added', 'modified', 'deleted',
             'renamed', 'copied', 'unmerged', 'untracked', 'ignored',
-            'stash', 'clean', 'branch', 'file_circle', 'success',
+            'stash', 'clean', 'branch', 'success',
             'warning', 'error', 'ahead', 'behind'
         ]
         
-        for emoji_name in expected_emojis:
-            self.assertIn(emoji_name, self.view.emojis)
-            self.assertIsInstance(self.view.emojis[emoji_name], str)
+        for symbol_name in expected_symbols:
+            self.assertIn(symbol_name, self.view.symbols)
+            self.assertIsInstance(self.view.symbols[symbol_name], str)
     
     def test_display_summary_clean_repo(self):
         """Test displaying summary for a clean repository."""
