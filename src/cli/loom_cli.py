@@ -55,6 +55,12 @@ def go(
 
 
 @app.command()
-def sync() -> None:
+def sync(
+    push: bool = typer.Option(
+        False,
+        "--push",
+        help="Also push local commits after pulling (when safe)"
+    )
+) -> None:
     """Sync clean repositories (git pull) in parallel."""
-    controller.sync()
+    controller.sync(push=push)

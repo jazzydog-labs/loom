@@ -90,6 +90,42 @@ class GitManager:
             logger.error(f"Error pulling {path}: {e}")
             return False, False
     
+    def push_repo(self, path: Path) -> Tuple[bool, bool]:
+        """Push local commits to upstream.
+        
+        Returns:
+            Tuple of (success, had_changes) where:
+            - success: True if git push succeeded
+            - had_changes: True if commits were actually pushed to upstream
+        """
+        try:
+            cmd = ["git", "push"]
+            result = subprocess.run(
+                cmd, 
+                cwd=path,
+                capture_output=True, 
+                text=True, 
+                timeout=self.timeout
+            )
+            
+            if result.returncode == 0:
+                # Check if commits were actually pushed
+                output = result.stdout.strip() + result.stderr.strip()
+                had_changes = not ("Everything up-to-date" in output)
+                
+                logger.info(f"Successfully pushed {path}")
+                return True, had_changes
+            else:
+                logger.error(f"Failed to push {path}: {result.stderr}")
+                return False, False
+                
+        except subprocess.TimeoutExpired:
+            logger.error(f"Timeout pushing {path}")
+            return False, False
+        except Exception as e:
+            logger.error(f"Error pushing {path}: {e}")
+            return False, False
+    
     def get_repo_status(self, path: Path) -> Dict[str, str]:
         """Get the status of a git repository."""
         status = {
