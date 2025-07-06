@@ -9,7 +9,7 @@ from typing import Optional
 import typer
 from rich.console import Console
 
-from .controllers import LoomController
+from .app import LoomController
 console = Console()
 app = typer.Typer()
 controller = LoomController(console=console)

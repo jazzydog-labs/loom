@@ -10,3 +10,29 @@
   - Provide a color schema
   - Allow declarative color selection
 - Move configuration settings from Python into files
+
+## Architecture Skeleton
+- [ ] Integrate new `cli` package with Typer commands
+- [ ] Wire `app.LoomController` into existing CLI
+- [ ] Flesh out domain aggregates (`Repo`, `Foundry`, `FreezeSnapshot`)
+- [ ] Implement services
+  - [ ] `RepoStatusSvc`
+  - [ ] `BulkExecSvc`
+  - [ ] `FreezeSvc`
+  - [ ] `StashCoordinator`
+- [ ] Infrastructure gateways
+  - [ ] `GitGateway` with proper subprocess handling
+  - [ ] `FSGateway` for file operations
+  - [ ] `ShellGateway` with concurrency limits
+  - [ ] `GitCache` for commit graph lookup
+  - [ ] `Telemetry` hooks for all services
+  - [ ] `PolicyEnforcer` for command vetting
+  - [ ] `SecretsManager` to load SSH/GPG keys
+  - [ ] `ConcurrencyController` with circuit breakers
+  - [ ] `AuthContext` capturing user info
+- [ ] Event bus and basic events
+  - [ ] `FreezeCreated`
+  - [ ] `RepoStatusUpdated`
+- [ ] Plugin registry for repo-specific actions
+- [ ] Unit of Work pattern across services
+- [ ] Persistent freeze snapshots for time-travel

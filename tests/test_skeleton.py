@@ -1,0 +1,42 @@
+from src.domain.freeze_snapshot import FreezeSnapshot
+from src.services.freeze_svc import FreezeSvc
+from src.services.bulk_exec_svc import BulkExecSvc
+from src.services.stash_coordinator import StashCoordinator
+from src.services.repo_status_svc import RepoStatusSvc
+from src.events.event_bus import EventBus
+from src.infra.telemetry import Telemetry
+from src.infra.git_cache import GitCache
+from src.infra.policy_enforcer import PolicyEnforcer
+from src.infra.secrets_manager import SecretsManager
+from src.infra.concurrency_controller import ConcurrencyController
+from src.infra.auth_context import AuthContext
+
+
+def test_freeze_snapshot():
+    snap = FreezeSnapshot()
+    assert "TODO" in snap.describe()
+
+
+def test_services():
+    assert FreezeSvc().create_freeze("v1") == "TODO: create freeze for v1"
+    assert BulkExecSvc().run("ls") == "TODO: bulk run ls"
+    coord = StashCoordinator()
+    assert coord.stash_all() == "TODO: stash all"
+    assert RepoStatusSvc().status("repo") == "TODO: status for repo"
+
+
+def test_event_bus():
+    bus = EventBus()
+    called = []
+    bus.subscribe("test", lambda p: called.append(p))
+    bus.publish("test", 1)
+    assert called == [1]
+
+
+def test_cross_cutting():
+    assert Telemetry().log("msg") == "TODO: log msg"
+    assert GitCache().get("repo") == "TODO: cached data for repo"
+    assert PolicyEnforcer().check("cmd") == "TODO: check policy for cmd"
+    assert SecretsManager().load() == "TODO: load secrets"
+    assert ConcurrencyController().run_limited(lambda: None) == "TODO: run with concurrency limits"
+    assert AuthContext().current_user() == "TODO: identify user"
