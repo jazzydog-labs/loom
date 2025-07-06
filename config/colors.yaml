@@ -1,0 +1,28 @@
+# Color scheme for loom CLI
+colors:
+  # Repository headers
+  repo_header_clean: "#B8860B"      # Dark gold for clean repos
+  repo_header_dirty: "#008B8B"      # Dark cyan/teal for repos with changes
+  
+  # Status indicators
+  clean_sparkles: "yellow"          # Sparkles for clean repos
+  error: "red"                      # Error messages
+  warning: "yellow"                 # Warning messages
+  success: "green"                  # Success messages
+  
+  # Git status colors
+  git_added: "green"               # Added files
+  git_modified: "yellow"           # Modified files
+  git_deleted: "red"               # Deleted files
+  git_renamed: "magenta"           # Renamed files
+  git_untracked: "white"           # Untracked files
+  git_ignored: "dim"               # Ignored files
+  
+  # UI elements
+  separator: "cyan"                # Separator lines
+  header: "bold cyan"              # Section headers
+  progress: "cyan"                 # Progress indicators
+  
+  # Ahead/behind indicators
+  ahead: "green"                   # Commits ahead
+  behind: "red"                    # Commits behind 

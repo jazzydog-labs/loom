@@ -24,11 +24,13 @@ app = typer.Typer()
 from loomlib.config import ConfigManager
 from loomlib.git import GitManager
 from loomlib.repo_manager import RepoManager
+from loomlib.color_manager import ColorManager
 
 # Initialize managers
 config_manager = ConfigManager()
 git_manager = GitManager()
 repo_manager = RepoManager(config_manager, git_manager)
+color_manager = ColorManager()
 
 def main():
     """Main entry point."""
@@ -69,14 +71,17 @@ def show_details():
     import time
     spinner_frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
     # Print header and spinner
-    console.print(f"[cyan]{line}[/cyan]", markup=True)
+    separator = color_manager.format_text(line, "separator")
+    console.print(separator, markup=True)
     for i, name in enumerate(repo_names):
         spinner = spinner_frames[i % len(spinner_frames)]
-        console.print(f"[magenta]Detailed Status: {spinner} Loading...[/magenta]", markup=True, end="\r")
+        progress_text = color_manager.format_text(f"Detailed Status: {spinner} Loading...", "progress")
+        console.print(progress_text, markup=True, end="\r")
         details[name] = repo_manager.get_detailed_status(name)
         time.sleep(0.05)
-    console.print(f"[magenta]Detailed Status: ✅ completed[/magenta]", markup=True)
-    console.print(f"[cyan]{line}[/cyan]", markup=True)
+    completed_text = color_manager.format_text("Detailed Status: ✅ completed", "progress")
+    console.print(completed_text, markup=True)
+    console.print(separator, markup=True)
     # Print repo details after spinner
     display_detailed_status(details)
 
@@ -232,15 +237,17 @@ def display_detailed_status(details: dict):
             behind_part = parts[1]
             ahead_num = ahead_part.split()[1]
             behind_num = behind_part.split()[1]
-            return f" [green]▲{ahead_num}[/green] [red]▼{behind_num}[/red]"
+            ahead_text = color_manager.format_ahead_behind(f"▲{ahead_num}", True)
+            behind_text = color_manager.format_ahead_behind(f"▼{behind_num}", False)
+            return f" {ahead_text} {behind_text}"
         elif 'ahead' in ahead_behind:
             # Only ahead
             num = ahead_behind.split()[1]
-            return f" [green]▲{num}[/green]"
+            return f" {color_manager.format_ahead_behind(f'▲{num}', True)}"
         elif 'behind' in ahead_behind:
             # Only behind
             num = ahead_behind.split()[1]
-            return f" [red]▼{num}[/red]"
+            return f" {color_manager.format_ahead_behind(f'▼{num}', False)}"
         else:
             return f" {ahead_behind}"
     
@@ -329,11 +336,14 @@ def display_detailed_status(details: dict):
             
             # Check if repo is clean
             if len(lines) == 1:
-                console.print(f"\n[bold #B8860B]{header}[/bold #B8860B] [yellow]✨✨✨[/yellow]")
+                header_text = color_manager.format_repo_header(header, is_clean=True)
+                sparkles = color_manager.format_text("✨✨✨", "clean_sparkles")
+                console.print(f"\n{header_text} {sparkles}")
                 continue
             
             # Display header for repos with changes
-            console.print(f"\n[bold #008B8B]{header}[/bold #008B8B]")
+            header_text = color_manager.format_repo_header(header, is_clean=False)
+            console.print(f"\n{header_text}")
             
             # Group files by directory
             files_by_dir = {}
