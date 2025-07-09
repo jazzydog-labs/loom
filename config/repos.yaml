@@ -19,6 +19,14 @@ repos:
   url: https://github.com/jazzydog-labs/forge.git
   path: $DEV_ROOT/$FOUNDRY_DIR/forge
 
+- name: genesis
+  url: https://github.com/jazzydog-labs/genesis.git
+  path: $DEV_ROOT/genesis
+
+- name: golden-snapshot
+  url: https://github.com/jazzydog-labs/golden-snapshot.git
+  path: $DEV_ROOT/golden-snapshot
+
 - name: loom
   url: https://github.com/jazzydog-labs/loom.git
   path: $DEV_ROOT/$FOUNDRY_DIR/loom
