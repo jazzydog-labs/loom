@@ -1,24 +1,21 @@
 test:
 	pytest -q
 
-# Run demo scripts
-demo script="":
+# Run all demo scripts
+demo:
 	#!/usr/bin/env bash
-	if [ -z "{{script}}" ]; then
-		echo "Available demos:"
-		echo "  - bulk_exec: Demonstrate parallel command execution"
-		echo ""
-		echo "Usage: just demo <demo_name>"
-		echo "Example: just demo bulk_exec"
-	else
-		case "{{script}}" in
-			"bulk_exec")
-				./scripts/demos/bulk_exec_demo.sh
-				;;
-			*)
-				echo "Unknown demo: {{script}}"
-				echo "Run 'just demo' to see available demos"
-				exit 1
-				;;
-		esac
-	fi
+	echo "🎭 Running all Loom demos..."
+	echo
+	
+	# Run each demo script
+	for demo in scripts/demos/*.sh; do
+		if [ -x "$demo" ]; then
+			echo "────────────────────────────────────────────────────────────────"
+			echo "Running: $(basename "$demo")"
+			echo "────────────────────────────────────────────────────────────────"
+			"$demo"
+			echo
+		fi
+	done
+	
+	echo "🎉 All demos complete!"

@@ -1,10 +1,10 @@
 #!/bin/bash
-# Demo script for BulkExecSvc - parallel command execution across repositories
+# Demo script for repository health checks using BulkExecSvc
 
 set -e
 
-echo "=== 🚀 Loom BulkExecSvc Demo ==="
-echo "Demonstrating parallel command execution across repositories"
+echo "=== 🏥 Repository Health Check Demo ==="
+echo "Analyzing repository health metrics across the foundry"
 echo
 
 # Check if we're in the loom directory
@@ -14,80 +14,55 @@ if [ ! -f "loom.py" ]; then
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📊 Repository Branch Status"
+echo "🔒 Security: Checking for exposed secrets patterns"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'git branch --show-current'
+python3 loom.py exec 'grep -r "password\|secret\|api_key\|token" --include="*.py" --include="*.js" --include="*.env*" . 2>/dev/null | grep -v ".git" | wc -l | xargs -I {} echo "{} potential secret references"' --workers 4
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "💾 Repository Sizes"
+echo "📊 Code Quality: Large files check (>500 lines)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'du -sh .'
+python3 loom.py exec 'find . -name "*.py" -type f -exec wc -l {} \; 2>/dev/null | awk "\$1 > 500" | wc -l | xargs -I {} echo "{} files over 500 lines"'
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📝 Python File Count Analysis"
+echo "🧪 Testing: Test file presence"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'find . -name "*.py" -type f | wc -l | xargs -I {} echo "{} Python files"' --workers 4
+python3 loom.py exec 'test -d tests && echo "✓ Has tests directory" || test -d test && echo "✓ Has test directory" || echo "⚠️  No test directory found"'
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📊 Git Commit Count (last 30 days)"
+echo "📦 Dependencies: Package files check"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'git log --oneline --since="30 days ago" 2>/dev/null | wc -l | xargs -I {} echo "{} commits"'
+python3 loom.py exec 'ls -1 | grep -E "requirements|package|Cargo.toml|go.mod|pom.xml|build.gradle|pyproject.toml" | tr "\n" ", " | sed "s/,$//" | xargs -I {} echo "Found: {}"' --no-summary
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🌳 Top-Level Directory Structure"
+echo "📚 Documentation: Core docs presence"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'ls -1 | head -10 | tr "\n" " " | sed "s/ $//"' --no-summary
-
-echo -e "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📁 Common Directories Analysis"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Finding directories that exist across multiple repositories..."
-echo
-
-# Collect all directories from all repos
-TEMP_FILE=$(mktemp)
-python3 loom.py exec 'find . -type d -maxdepth 2 -name ".git" -prune -o -type d -maxdepth 2 -print | sed "s|^./||" | grep -v "^\.$" | sort' --no-summary > "$TEMP_FILE" 2>&1
-
-# Extract just the output lines (after the table)
-grep -E "^[a-zA-Z0-9_-]" "$TEMP_FILE" | grep -v "Repository" | grep -v "━" | grep -v "✓" | \
-    awk '{for(i=5;i<=NF;i++) print $i}' | \
-    sort | uniq -c | sort -rn | head -15 > "${TEMP_FILE}.dirs"
-
-echo "Top directories by frequency across repos:"
-echo "Count  Directory"
-echo "-----  ---------"
-cat "${TEMP_FILE}.dirs"
-
-rm -f "$TEMP_FILE" "${TEMP_FILE}.dirs"
+python3 loom.py exec 'echo -n "Docs: "; ls -1 | grep -E "README|LICENSE|CONTRIBUTING|CHANGELOG" | wc -l | xargs -I {} echo "{} core files"' --no-summary
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📈 Language Distribution (by file extensions)"
+echo "🚨 Git: Uncommitted changes check"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'find . -type f -name "*.*" | grep -v ".git" | sed "s/.*\.//" | sort | uniq -c | sort -rn | head -5 | awk "{printf \"%-10s %s files\\n\", \$2, \$1}"'
+python3 loom.py exec 'git status --porcelain 2>/dev/null | wc -l | xargs -I {} test {} -eq 0 && echo "✓ Clean working tree" || echo "⚠️  {} uncommitted changes"'
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "📋 README Status Check"
+echo "🏷️  Git: Remote tracking status"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'test -f README.md && echo "✓ Has README.md" || echo "✗ No README.md"'
+python3 loom.py exec 'git remote -v 2>/dev/null | grep -q "origin" && echo "✓ Has origin remote" || echo "✗ No origin remote"'
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔍 TODO/FIXME Comments Count"
+echo "📏 Repository Age (days since first commit)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'grep -r "TODO\|FIXME" --include="*.py" --include="*.js" --include="*.ts" --include="*.go" --include="*.java" . 2>/dev/null | wc -l | xargs -I {} echo "{} TODO/FIXME comments"' --workers 4
+python3 loom.py exec 'git log --reverse --format="%at" 2>/dev/null | head -1 | xargs -I {} test -n {} && echo $(( ($(date +%s) - {}) / 86400 )) "days old" || echo "No commits yet"' --no-summary
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎯 Latest Commit Info"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'git log -1 --format="%h %s" 2>/dev/null || echo "No commits yet"' --no-summary
-
-echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ Demo Complete!"
+echo "✅ Health Check Complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
-echo "The BulkExecSvc enables powerful repository analytics and operations:"
-echo "• Parallel execution across all repositories"
-echo "• Flexible command targeting with --repos"
-echo "• Performance tuning with --workers"
-echo "• Rich formatted output with summaries"
+echo "This health check demo showcases:"
+echo "• Security scanning for potential exposed secrets"
+echo "• Code quality metrics (file sizes)"
+echo "• Test infrastructure presence"
+echo "• Dependency management files"
+echo "• Documentation completeness"
+echo "• Git repository health"
 echo
-echo "Use cases: status checks, metrics gathering, bulk operations, health monitoring"
+echo "Use these checks to maintain consistent standards across all repositories!"
