@@ -161,7 +161,7 @@ def main():
         "echo 'Command 1'",
         "echo 'Command 2'", 
         "echo 'Command 3'",
-        "sleep 0.1 && echo 'Command 4'"
+        "echo 'Command 4'"
     ]
     
     start_time = time.time()
