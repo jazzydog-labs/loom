@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://loom.dev/schemas/base.schema.json",
+  "title": "Loom Action Base Schema",
+  "description": "Base schema for all Loom JSON actions",
+  "type": "object",
+  "required": ["action", "version"],
+  "properties": {
+    "action": {
+      "type": "string",
+      "description": "The action to perform (e.g., 'freeze.create', 'bulk.execute')",
+      "pattern": "^[a-z]+\\.[a-z]+$"
+    },
+    "version": {
+      "type": "string",
+      "description": "Schema version for compatibility",
+      "enum": ["1.0"]
+    },
+    "payload": {
+      "type": "object",
+      "description": "Action-specific parameters"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Optional tracking and context information",
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique request identifier for tracking"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the action was created"
+        },
+        "source": {
+          "type": "string",
+          "description": "Origin of the action (cli, api, script, etc.)",
+          "enum": ["cli", "api", "script", "webhook", "scheduler", "manual", "other"]
+        },
+        "user": {
+          "type": "string",
+          "description": "User or system that initiated the action"
+        },
+        "dry_run": {
+          "type": "boolean",
+          "description": "If true, simulate the action without making changes",
+          "default": false
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Maximum execution time in seconds",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "correlation_id": {
+          "type": "string",
+          "description": "ID to correlate related actions"
+        },
+        "tags": {
+          "type": "object",
+          "description": "Additional key-value pairs for categorization",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

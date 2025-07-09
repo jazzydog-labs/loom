@@ -1,0 +1,24 @@
+{
+  "action": "freeze.create",
+  "version": "1.0",
+  "payload": {
+    "name": "before-major-refactor",
+    "repos": ["*"],
+    "message": "Creating snapshot before refactoring authentication system",
+    "include_untracked": false,
+    "tags": ["refactor", "auth", "backup"]
+  },
+  "metadata": {
+    "request_id": "550e8400-e29b-41d4-a716-446655440000",
+    "timestamp": "2024-01-09T10:30:00Z",
+    "source": "cli",
+    "user": "developer@example.com",
+    "dry_run": false,
+    "correlation_id": "auth-refactor-2024-01",
+    "tags": {
+      "project": "authentication",
+      "priority": "high",
+      "team": "platform"
+    }
+  }
+}

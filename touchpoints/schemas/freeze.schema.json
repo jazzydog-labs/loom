@@ -1,0 +1,201 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://loom.dev/schemas/freeze.schema.json",
+  "title": "Freeze Action Schemas",
+  "description": "Schemas for freeze-related actions",
+  "oneOf": [
+    {
+      "title": "Freeze Create",
+      "description": "Create a new freeze snapshot",
+      "allOf": [
+        { "$ref": "base.schema.json" },
+        {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "freeze.create"
+            },
+            "payload": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name for the freeze snapshot",
+                  "minLength": 1,
+                  "maxLength": 100,
+                  "pattern": "^[a-zA-Z0-9_-]+$"
+                },
+                "repos": {
+                  "type": "array",
+                  "description": "Repository paths to freeze (default: all)",
+                  "items": {
+                    "type": "string"
+                  },
+                  "default": ["*"]
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Optional description of the snapshot",
+                  "maxLength": 500
+                },
+                "include_untracked": {
+                  "type": "boolean",
+                  "description": "Include untracked files in snapshot",
+                  "default": false
+                },
+                "tags": {
+                  "type": "array",
+                  "description": "Tags for categorizing the snapshot",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z0-9_-]+$"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Freeze Restore",
+      "description": "Restore from a freeze snapshot",
+      "allOf": [
+        { "$ref": "base.schema.json" },
+        {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "freeze.restore"
+            },
+            "payload": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the snapshot to restore",
+                  "minLength": 1
+                },
+                "repos": {
+                  "type": "array",
+                  "description": "Repository paths to restore (default: all in snapshot)",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "force": {
+                  "type": "boolean",
+                  "description": "Force restore even with uncommitted changes",
+                  "default": false
+                },
+                "partial": {
+                  "type": "boolean",
+                  "description": "Allow partial restore if some repos fail",
+                  "default": false
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Freeze List",
+      "description": "List available freeze snapshots",
+      "allOf": [
+        { "$ref": "base.schema.json" },
+        {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "freeze.list"
+            },
+            "payload": {
+              "type": "object",
+              "properties": {
+                "filter": {
+                  "type": "object",
+                  "description": "Filter criteria for snapshots",
+                  "properties": {
+                    "name_pattern": {
+                      "type": "string",
+                      "description": "Regex pattern to match snapshot names"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "description": "Filter by tags (AND operation)",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "created_after": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Only show snapshots created after this time"
+                    },
+                    "created_before": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Only show snapshots created before this time"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "sort": {
+                  "type": "string",
+                  "description": "Sort order for results",
+                  "enum": ["name", "created", "-name", "-created"],
+                  "default": "-created"
+                },
+                "limit": {
+                  "type": "integer",
+                  "description": "Maximum number of results",
+                  "minimum": 1,
+                  "maximum": 1000,
+                  "default": 100
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": "Freeze Delete",
+      "description": "Delete a freeze snapshot",
+      "allOf": [
+        { "$ref": "base.schema.json" },
+        {
+          "type": "object",
+          "properties": {
+            "action": {
+              "const": "freeze.delete"
+            },
+            "payload": {
+              "type": "object",
+              "required": ["name"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the snapshot to delete",
+                  "minLength": 1
+                },
+                "confirm": {
+                  "type": "boolean",
+                  "description": "Confirmation flag to prevent accidental deletion",
+                  "const": true
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
