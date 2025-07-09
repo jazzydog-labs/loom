@@ -169,11 +169,11 @@ class LoomController(LegacyController):
                 for repo in aggregated["failed"]:
                     self.console.print(f"  - {repo}")
     
-    def do_command(self, task: str, repo_names: Optional[List[str]] = None,
-                   max_workers: int = 8, verbose: bool = False) -> None:
-        """Run a 'just' task across repositories, filtering for errors."""
+    def just_command(self, recipe: str, repo_names: Optional[List[str]] = None,
+                     max_workers: int = 8, verbose: bool = False) -> None:
+        """Run a just recipe across repositories with single-line output."""
         # Map common tasks to their commands
-        command = f"just {task}"
+        command = f"just {recipe}"
         
         # Get repository configuration
         repos_config = self.config.load_repos()
@@ -210,9 +210,9 @@ class LoomController(LegacyController):
         self.bulk_exec_svc.foundry = foundry
         
         # Display what we're about to do
-        self.console.print(f"\n[bold]Running task '{task}' across {len(repo_objects)} repositories:[/bold]")
+        self.console.print(f"\n[bold]Running recipe '{recipe}' across {len(repo_objects)} repositories:[/bold]")
         self.console.print(f"[cyan]Command:[/cyan] {command}")
-        self.console.print(f"[cyan]Mode:[/cyan] {'Verbose (all output)' if verbose else 'Filtered (errors only)'}")
+        self.console.print(f"[cyan]Mode:[/cyan] {'Verbose (all output)' if verbose else 'Single-line output'}")
         self.console.print(f"[cyan]Workers:[/cyan] {max_workers}\n")
         
         # Execute with progress indication
@@ -222,10 +222,10 @@ class LoomController(LegacyController):
             )
         
         # Display results
-        self._display_do_results(results, task, verbose)
+        self._display_just_results(results, recipe, verbose)
     
-    def _display_do_results(self, results: dict, task: str, verbose: bool) -> None:
-        """Display the results of 'do' command execution with error filtering."""
+    def _display_just_results(self, results: dict, recipe: str, verbose: bool) -> None:
+        """Display the results of 'just' command execution with single-line output."""
         # Error patterns to look for
         error_patterns = [
             "error", "Error", "ERROR",
@@ -259,25 +259,11 @@ class LoomController(LegacyController):
                 else:
                     successful_repos.append(repo_name)
         
-        # Display summary header
-        self.console.print(f"\n[bold]Task '{task}' Results:[/bold]")
-        self.console.print("=" * 60)
+        # Display single-line results
+        self.console.print(f"\n[bold]Recipe '{recipe}' Results:[/bold]")
         
-        # Show statistics
-        total = len(results)
-        clean_success = len(successful_repos)
-        with_errors = len(repos_with_errors)
-        failed = len(failed_repos)
-        
-        self.console.print(f"[green]✓ Clean success:[/green] {clean_success}/{total}")
-        if with_errors:
-            self.console.print(f"[yellow]⚠ Success with errors:[/yellow] {with_errors}/{total}")
-        if failed:
-            self.console.print(f"[red]✗ Failed:[/red] {failed}/{total}")
-        
-        # In verbose mode, show all output
+        # In verbose mode, show all output in table format
         if verbose:
-            self.console.print("\n[bold]All Output:[/bold]")
             table = Table(show_lines=True)
             table.add_column("Repository", style="cyan", no_wrap=True)
             table.add_column("Status", style="bold")
@@ -290,42 +276,23 @@ class LoomController(LegacyController):
             
             self.console.print(table)
         else:
-            # Show only errors and failures
-            if failed_repos or repos_with_errors:
-                self.console.print("\n[bold red]Errors and Failures:[/bold red]")
-                self.console.print("-" * 60)
-                
-                # Show failed executions first
-                for repo_name, result in failed_repos:
-                    self.console.print(f"\n[red bold]{repo_name}[/red bold] (exit code: {result.return_code})")
-                    if result.stderr:
-                        self.console.print("[red]STDERR:[/red]")
-                        self.console.print(result.stderr.strip())
+            # Single-line output format
+            for repo_name, result in sorted(results.items()):
+                if not result.success:
+                    # Check if it's a missing justfile or recipe
+                    if "justfile" in result.stderr.lower() or "recipe" in result.stderr.lower():
+                        if "no justfile" in result.stderr.lower() or "justfile not found" in result.stderr.lower():
+                            self.console.print(f"[yellow]{repo_name}[/yellow]: no justfile")
+                        elif "recipe" in result.stderr.lower() and "not found" in result.stderr.lower():
+                            self.console.print(f"[yellow]{repo_name}[/yellow]: no recipe '{recipe}'")
+                        else:
+                            self.console.print(f"[red]{repo_name}[/red]: {result.stderr.strip().split(chr(10))[0]}")
+                    else:
+                        self.console.print(f"[red]{repo_name}[/red]: {result.stderr.strip().split(chr(10))[0] if result.stderr else 'failed'}")
+                else:
+                    # Success - show first line of output or success indicator
                     if result.stdout:
-                        self.console.print("[yellow]STDOUT:[/yellow]")
-                        self.console.print(result.stdout.strip())
-                    self.console.print("-" * 40)
-                
-                # Show repos with error patterns
-                for repo_name, result in repos_with_errors:
-                    self.console.print(f"\n[yellow bold]{repo_name}[/yellow bold] (completed with errors)")
-                    
-                    # Extract and show only lines with errors
-                    error_lines = []
-                    for line in (result.stdout + "\n" + result.stderr).splitlines():
-                        if any(pattern.lower() in line.lower() for pattern in error_patterns):
-                            error_lines.append(line)
-                    
-                    if error_lines:
-                        self.console.print("[yellow]Error lines:[/yellow]")
-                        for line in error_lines[:10]:  # Limit to 10 lines
-                            self.console.print(f"  {line}")
-                        if len(error_lines) > 10:
-                            self.console.print(f"  ... and {len(error_lines) - 10} more error lines")
-                    self.console.print("-" * 40)
-            else:
-                self.console.print(f"\n[green]✅ All repositories completed '{task}' successfully with no errors![/green]")
-        
-        # Show summary of clean repos
-        if successful_repos and not verbose:
-            self.console.print(f"\n[green]Clean success in:[/green] {', '.join(successful_repos)}")
+                        first_line = result.stdout.strip().split('\n')[0]
+                        self.console.print(f"[green]{repo_name}[/green]: {first_line}")
+                    else:
+                        self.console.print(f"[green]{repo_name}[/green]: ✓")

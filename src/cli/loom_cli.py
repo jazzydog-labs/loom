@@ -95,8 +95,8 @@ def exec(
 
 
 @app.command()
-def do(
-    task: str = typer.Argument(..., help="Task to run (e.g., 'test' runs 'just test')"),
+def just(
+    recipe: str = typer.Argument(..., help="Just recipe to run (e.g., 'test' runs 'just test')"),
     repos: Optional[str] = typer.Option(
         None, "--repos", "-r", help="Comma-separated list of specific repos to target"
     ),
@@ -107,6 +107,6 @@ def do(
         False, "--verbose", "-v", help="Show all output, not just errors"
     ),
 ) -> None:
-    """Run a task across repositories, filtering for errors and failures."""
+    """Run a just recipe across repositories with single-line output."""
     repo_list = repos.split(",") if repos else None
-    controller.do_command(task, repo_list, max_workers, verbose)
+    controller.just_command(recipe, repo_list, max_workers, verbose)

@@ -1,10 +1,10 @@
 #!/bin/bash
-# Demo script for 'loom do' command - running tasks with error filtering
+# Demo script for 'loom just' command - running just recipes with single-line output
 
 set -e
 
-echo "=== 🧪 Loom 'do' Command Demo ==="
-echo "Running tasks across repositories with intelligent error filtering"
+echo "=== 🧪 Loom 'just' Command Demo ==="
+echo "Running just recipes across repositories with single-line output"
 echo
 
 # Check if we're in the loom directory
@@ -21,11 +21,11 @@ echo
 python3 loom.py exec 'test -f justfile && grep -q "^test:" justfile && echo "✓ Has test recipe" || echo "✗ No test recipe"'
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🧪 Running tests in all repositories (errors only)"
+echo "🧪 Running tests in all repositories (single-line output)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Running 'just test' and filtering for errors/failures..."
+echo "Running 'just test' with single-line output per repository..."
 echo
-python3 loom.py do test || true
+python3 loom.py just test || true
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 Demonstrating error detection with a failing command"
@@ -48,17 +48,17 @@ echo "📊 Running with verbose mode to see all output"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Same test command but with --verbose to see everything..."
 echo
-python3 loom.py do test --repos loom --verbose
+python3 loom.py just test --repos loom --verbose
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🎯 Common tasks you can run with 'loom do'"
+echo "🎯 Common recipes you can run with 'loom just'"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Examples of useful commands:"
-echo "  • loom do test         - Run tests in all repos, show only failures"
-echo "  • loom do lint         - Run linters, show only issues"
-echo "  • loom do build        - Build all projects, show only errors"
-echo "  • loom do check        - Run checks, show only problems"
-echo "  • loom do fmt          - Format code, show only errors"
+echo "  • loom just test       - Run tests in all repos, one line per repo"
+echo "  • loom just lint       - Run linters, one line per repo"
+echo "  • loom just build      - Build all projects, one line per repo"
+echo "  • loom just check      - Run checks, one line per repo"
+echo "  • loom just fmt        - Format code, one line per repo"
 echo
 echo "Add --verbose to see all output, or --repos to target specific repos"
 
@@ -66,10 +66,10 @@ echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━
 echo "✅ Demo Complete!"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo
-echo "The 'loom do' command helps you:"
-echo "• Run common tasks across all repositories in parallel"
-echo "• Automatically filter output to show only errors and failures"
-echo "• Save time by focusing on what needs attention"
+echo "The 'loom just' command helps you:"
+echo "• Run just recipes across all repositories in parallel"
+echo "• Single-line output format for quick scanning"
+echo "• Handle missing justfiles and recipes gracefully"
 echo "• Use --verbose when you need to see all output"
 echo
 echo "Perfect for CI/CD workflows and daily development tasks!"
