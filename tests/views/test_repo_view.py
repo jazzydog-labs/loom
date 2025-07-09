@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 
 from src.views.repo_view import RepoView
-from src.utils.repo_status_reader import RepoStatusReader
+from src.services.repo_status_service import RepoStatusService
 
 
 class TestRepoView(unittest.TestCase):
