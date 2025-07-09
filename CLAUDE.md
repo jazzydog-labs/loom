@@ -85,3 +85,10 @@ When implementing new features:
 2. Use the worker pool for any parallel operations
 3. Emit appropriate domain events for state changes
 4. Add unit tests following the existing test structure pattern
+
+### Good Citizen Principle
+Be a good citizen and fix failing tests, even if they're not your responsibility! If you encounter failing tests while working on a feature:
+1. Investigate the root cause
+2. Fix the test if it's a simple issue
+3. Ensure all tests pass before committing
+4. Include the fix in your commit with a note about being a good citizen
