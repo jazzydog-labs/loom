@@ -74,3 +74,21 @@ def todos(
 ) -> None:
     """Display pending TODOs grouped by file and hierarchy."""
     controller.todos(root)
+
+
+@app.command()
+def exec(
+    command: str = typer.Argument(..., help="Command to execute in each repository"),
+    repos: Optional[str] = typer.Option(
+        None, "--repos", "-r", help="Comma-separated list of specific repos to target"
+    ),
+    max_workers: int = typer.Option(
+        8, "--workers", "-w", help="Maximum number of parallel workers"
+    ),
+    summary: bool = typer.Option(
+        True, "--summary/--no-summary", help="Show execution summary"
+    ),
+) -> None:
+    """Execute a command across multiple repositories in parallel."""
+    repo_list = repos.split(",") if repos else None
+    controller.bulk_exec(command, repo_list, max_workers, summary)

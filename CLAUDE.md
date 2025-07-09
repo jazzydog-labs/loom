@@ -86,6 +86,9 @@ When implementing new features:
 3. Emit appropriate domain events for state changes
 4. Add unit tests following the existing test structure pattern
 
+## Demos
+- When adding any feature, please demo that feature in a `scripts/demos/*` script, and make sure that if you're creating a new demo script we are also adding it to `just demo`
+
 ### Good Citizen Principle
 Be a good citizen and fix failing tests, even if they're not your responsibility! If you encounter failing tests while working on a feature:
 1. Investigate the root cause
