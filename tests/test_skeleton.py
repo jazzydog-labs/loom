@@ -21,9 +21,17 @@ def test_freeze_snapshot():
 
 def test_services():
     assert FreezeSvc().create_freeze("v1") == "TODO: create freeze for v1"
-    assert BulkExecSvc().run("ls") == "TODO: bulk run ls"
+    
+    # BulkExecSvc now returns CommandResult objects
+    bulk_svc = BulkExecSvc()
+    # Test with empty repos list (should return empty dict)
+    results = bulk_svc.run("ls", repos=[])
+    assert isinstance(results, dict)
+    assert len(results) == 0
+    
     coord = StashCoordinator()
     assert coord.stash_all() == "TODO: stash all"
+    
     # RepoStatusService now returns a dict with repo status
     status_svc = RepoStatusService()
     result = status_svc.status(".")
