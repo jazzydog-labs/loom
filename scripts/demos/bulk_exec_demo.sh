@@ -34,31 +34,15 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 python3 loom.py exec 'git log --oneline --since="30 days ago" 2>/dev/null | wc -l | xargs -I {} echo "{} commits"'
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🌳 Top-Level Directory Structure"
+echo "🌳 Top-Level Directory Structure (directories only)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-python3 loom.py exec 'ls -1 | head -10 | tr "\n" " " | sed "s/ $//"' --no-summary
+python3 loom.py exec 'find . -maxdepth 1 -type d -not -name "." -not -name ".git" -not -name "__pycache__" | sed "s|^./||" | sort | tr "\n" " " | head -c 100'
 
 echo -e "\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📁 Common Directories Analysis"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Finding directories that exist across multiple repositories..."
-echo
-
-# Collect all directories from all repos
-TEMP_FILE=$(mktemp)
-python3 loom.py exec 'find . -type d -maxdepth 2 -name ".git" -prune -o -type d -maxdepth 2 -print | sed "s|^./||" | grep -v "^\.$" | sort' --no-summary > "$TEMP_FILE" 2>&1
-
-# Extract just the output lines (after the table)
-grep -E "^[a-zA-Z0-9_-]" "$TEMP_FILE" | grep -v "Repository" | grep -v "━" | grep -v "✓" | \
-    awk '{for(i=5;i<=NF;i++) print $i}' | \
-    sort | uniq -c | sort -rn | head -15 > "${TEMP_FILE}.dirs"
-
-echo "Top directories by frequency across repos:"
-echo "Count  Directory"
-echo "-----  ---------"
-cat "${TEMP_FILE}.dirs"
-
-rm -f "$TEMP_FILE" "${TEMP_FILE}.dirs"
+# Run the Python analysis script for better directory analysis
+python3 scripts/analyze_common_dirs.py
 
 echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📈 Language Distribution (by file extensions)"
