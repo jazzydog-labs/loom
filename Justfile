@@ -58,3 +58,8 @@ demo-health:
 demo-stash:
 	@echo "📚 Running StashCoordinator demo - Manage stashes across repos"
 	@bash scripts/demos/stash_coordinator_demo.sh
+
+# Demo: Safe file operations with permission handling
+demo-fs:
+	@echo "📁 Running FSGateway demo - Safe file operations with permissions"
+	@bash scripts/demos/fs_gateway_demo.sh

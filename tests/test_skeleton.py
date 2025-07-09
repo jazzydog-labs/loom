@@ -7,6 +7,7 @@ from src.events.event_bus import EventBus
 from src.infra.telemetry import Telemetry
 from src.infra.git_cache import GitCache
 from src.infra.git_gateway import GitGateway
+from src.infra.fs_gateway import FSGateway
 from src.infra.policy_enforcer import PolicyEnforcer
 from src.infra.secrets_manager import SecretsManager
 from src.infra.concurrency_controller import ConcurrencyController
@@ -67,6 +68,13 @@ def test_cross_cutting():
     result = git_gateway.run(['--version'], check=False)
     assert isinstance(result, dict)
     assert 'command' in result
+    
+    # FSGateway now provides comprehensive file operations
+    fs_gateway = FSGateway()
+    # Test basic functionality
+    assert hasattr(fs_gateway, 'read_text')
+    assert hasattr(fs_gateway, 'write_text')
+    assert hasattr(fs_gateway, 'exists')
     
     assert PolicyEnforcer().check("cmd") == "TODO: check policy for cmd"
     assert SecretsManager().load() == "TODO: load secrets"
