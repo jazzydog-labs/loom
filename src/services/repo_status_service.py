@@ -1,20 +1,47 @@
-"""Repository status reader for Git repositories.
+"""Repository status service for Git repositories.
 
-This module provides read-only status information for Git repositories
+This service provides read-only status information for Git repositories
 with JSON-serializable output suitable for CQRS queries.
 """
 
 from git import Repo, exc
 import pathlib
-import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-class RepoStatusReader:
-    def __init__(self, root):
-        self.repo = Repo(pathlib.Path(root).expanduser().resolve())
 
-    def get_summary_json(self):
-        head = self.repo.head.commit
+class RepoStatusService:
+    """Read-only repo status queries."""
+
+    def __init__(self):
+        pass
+
+    def status(self, repo_path: str) -> dict:
+        """Get status for a single repository.
+        
+        Args:
+            repo_path: Path to the repository
+            
+        Returns:
+            Dictionary with repository status information
+        """
+        try:
+            repo = Repo(pathlib.Path(repo_path).expanduser().resolve())
+            return self._get_repo_summary(repo)
+        except Exception as exc:
+            return {
+                'repo_status': {'error': str(exc)},
+                'file_status': {},
+                'file_counts': {}
+            }
+    
+    def _get_repo_summary(self, repo: Repo) -> dict:
+        """Get summary for a repository instance."""
+        raw_data = self._get_summary_json(repo)
+        return self._transform_for_view(raw_data)
+    
+    def _get_summary_json(self, repo: Repo) -> dict:
+        """Get raw summary data for a repository."""
+        head = repo.head.commit
         
         # Get upstream branch information and ahead/behind counts
         upstream_branch = None
@@ -24,7 +51,7 @@ class RepoStatusReader:
         
         try:
             # Get the tracking branch
-            tracking_branch = self.repo.active_branch.tracking_branch()
+            tracking_branch = repo.active_branch.tracking_branch()
             if tracking_branch:
                 # In some unit-test scenarios *tracking_branch.name* may be a mock rather
                 # than a real string which breaks substring checks. Coerce to *str*
@@ -36,22 +63,22 @@ class RepoStatusReader:
                     remote_name = upstream_branch.split("/", 1)[0]
 
                 # Count commits ahead (local commits not in upstream)
-                ahead = len(list(self.repo.iter_commits(f"{upstream_branch}..HEAD")))
+                ahead = len(list(repo.iter_commits(f"{upstream_branch}..HEAD")))
                 # Count commits behind (upstream commits not in local)
-                behind = len(list(self.repo.iter_commits(f"HEAD..{upstream_branch}")))
+                behind = len(list(repo.iter_commits(f"HEAD..{upstream_branch}")))
         except (AttributeError, exc.GitCommandError, ValueError):
             pass
             
         result = {
-            "branch": self.repo.active_branch.name,
-            "clean": not self.repo.is_dirty(untracked_files=True),
+            "branch": repo.active_branch.name,
+            "clean": not repo.is_dirty(untracked_files=True),
             "ahead": ahead,
             "behind": behind,
             "last_commit": {"sha": head.hexsha, "message": head.message.strip()},
             "changes": {
-                "staged":   [i.a_path for i in self.repo.index.diff("HEAD")],
-                "unstaged": [i.a_path for i in self.repo.index.diff(None)],
-                "untracked": self.repo.untracked_files,
+                "staged":   [i.a_path for i in repo.index.diff("HEAD")],
+                "unstaged": [i.a_path for i in repo.index.diff(None)],
+                "untracked": repo.untracked_files,
             },
         }
 
@@ -93,8 +120,7 @@ class RepoStatusReader:
             }
         }
 
-    @classmethod
-    def summaries_parallel(cls, repo_paths: dict[str, str], max_workers: int = 4) -> dict[str, dict]:
+    def summaries_parallel(self, repo_paths: dict[str, str], max_workers: int = 4) -> dict[str, dict]:
         """Fetch summaries for multiple repositories in parallel.
 
         Args:
@@ -106,17 +132,7 @@ class RepoStatusReader:
         """
         def worker(name_path: tuple[str, str]):
             name, path = name_path
-            try:
-                reader = cls(path)
-                raw = reader.get_summary_json()
-                transformed = reader._transform_for_view(raw)
-                return name, transformed
-            except Exception as exc:
-                return name, {
-                    'repo_status': {'error': str(exc)},
-                    'file_status': {},
-                    'file_counts': {}
-                }
+            return name, self.status(path)
 
         results: dict[str, dict] = {}
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -130,25 +146,3 @@ class RepoStatusReader:
 
         # Return results sorted by repo name
         return dict(sorted(results.items(), key=lambda x: x[0]))
-
-
-# Example usage and tests
-if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) != 2:
-        print("Usage: python repo_status_reader.py <repo_path>")
-        sys.exit(1)
-    
-    repo_path = sys.argv[1]
-    
-    try:
-        reader = RepoStatusReader(repo_path)
-        
-        print("=== Summary ===")
-        summary = reader.get_summary_json()
-        print(json.dumps(summary, indent=2))
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1) 

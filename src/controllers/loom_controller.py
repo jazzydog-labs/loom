@@ -22,7 +22,6 @@ from ..core.config import ConfigManager
 from ..core.git import GitManager
 from ..core.repo_manager import RepoManager
 from ..utils.emojis import get_emoji_manager
-from ..utils.repo_status_reader import RepoStatusReader
 from ..views.repo_view import RepoView
 from ..utils.worker_pool import map_parallel
 from ..infra.todo_manager import TodoManager
@@ -81,8 +80,9 @@ class LoomController:
             for repo in repos
         }
 
-        repos_data = RepoStatusReader.summaries_parallel(repo_paths)
-        RepoView(self.console).display_multiple_repos(repos_data)
+        # Now handled by the overridden method in src/app/loom_controller.py
+        # which uses RepoStatusService instead of RepoStatusReader
+        raise NotImplementedError("This method should be overridden by the new LoomController")
 
     def init(self, dev_root: Optional[str], bootstrap: bool = True) -> None:
         dev_root = dev_root or self.get_dev_root_interactive()

@@ -73,6 +73,13 @@ src/
 - Currently limited coverage - many tests are skeleton placeholders
 - Run specific test files to avoid running incomplete tests
 
+### Commit Workflow
+When working on tasks from `commits/open/`:
+1. Complete the implementation as described in the commit file
+2. Update the commit file to mark all tasks as completed and add "Status: COMPLETED ✓"
+3. Move the commit file from `commits/open/` to `commits/closed/` as part of your changes
+4. Include this file move in your git commit along with the implementation
+
 When implementing new features:
 1. Follow the existing DDD structure
 2. Use the worker pool for any parallel operations

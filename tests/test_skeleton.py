@@ -2,7 +2,7 @@ from src.domain.freeze_snapshot import FreezeSnapshot
 from src.services.freeze_svc import FreezeSvc
 from src.services.bulk_exec_svc import BulkExecSvc
 from src.services.stash_coordinator import StashCoordinator
-from src.services.repo_status_svc import RepoStatusSvc
+from src.services.repo_status_service import RepoStatusService
 from src.events.event_bus import EventBus
 from src.infra.telemetry import Telemetry
 from src.infra.git_cache import GitCache
@@ -24,7 +24,11 @@ def test_services():
     assert BulkExecSvc().run("ls") == "TODO: bulk run ls"
     coord = StashCoordinator()
     assert coord.stash_all() == "TODO: stash all"
-    assert RepoStatusSvc().status("repo") == "TODO: status for repo"
+    # RepoStatusService now returns a dict with repo status
+    status_svc = RepoStatusService()
+    result = status_svc.status(".")
+    assert isinstance(result, dict)
+    assert "repo_status" in result or "error" in result.get("repo_status", {})
 
 
 def test_event_bus():

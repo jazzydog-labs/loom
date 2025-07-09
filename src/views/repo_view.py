@@ -13,7 +13,6 @@ import io
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import asyncio
 
-from ..utils.repo_status_reader import RepoStatusReader
 from ..utils.emojis import get_emoji_manager
 from ..utils.color_manager import ColorManager
 
@@ -687,13 +686,9 @@ if __name__ == "__main__":
     repo_path = sys.argv[1]
     
     try:
-        # Create reader and view
-        reader = RepoStatusReader(repo_path)
-        view = RepoView()
-        
-        # Get summary and display it
-        summary = reader.get_summary_json()
-        view.display_summary("test-repo", summary)
+        # This example would need RepoStatusService to be used
+        # from the services layer
+        print("RepoView example - RepoStatusReader has been moved to RepoStatusService")
         
     except Exception as e:
         print(f"Error: {e}")
