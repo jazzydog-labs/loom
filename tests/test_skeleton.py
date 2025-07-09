@@ -34,8 +34,11 @@ def test_services():
     assert isinstance(results, dict)
     assert len(results) == 0
     
+    # StashCoordinator now requires repos parameter
     coord = StashCoordinator()
-    assert coord.stash_all() == "TODO: stash all"
+    stash_result = coord.stash_all([])
+    assert isinstance(stash_result, dict)
+    assert "stashed" in stash_result
     
     # RepoStatusService now returns a dict with repo status
     status_svc = RepoStatusService()
