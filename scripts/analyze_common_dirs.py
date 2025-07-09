@@ -10,7 +10,7 @@ def get_repo_directories():
     """Get directory listings from all repositories using loom exec."""
     # Run loom exec to get directories from all repos
     cmd = ["python3", "loom.py", "exec", 
-           'find . -type d -not -path "*/\.*" -maxdepth 2 | sed "s|^./||" | grep -v "^\\.$"',
+           r'find . -type d -not -path "*/\.*" -maxdepth 2 | sed "s|^./||" | grep -v "^\.$"',
            "--no-summary"]
     
     result = subprocess.run(cmd, capture_output=True, text=True)
