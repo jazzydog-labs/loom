@@ -92,3 +92,21 @@ def exec(
     """Execute a command across multiple repositories in parallel."""
     repo_list = repos.split(",") if repos else None
     controller.bulk_exec(command, repo_list, max_workers, summary)
+
+
+@app.command()
+def do(
+    task: str = typer.Argument(..., help="Task to run (e.g., 'test' runs 'just test')"),
+    repos: Optional[str] = typer.Option(
+        None, "--repos", "-r", help="Comma-separated list of specific repos to target"
+    ),
+    max_workers: int = typer.Option(
+        8, "--workers", "-w", help="Maximum number of parallel workers"
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Show all output, not just errors"
+    ),
+) -> None:
+    """Run a task across repositories, filtering for errors and failures."""
+    repo_list = repos.split(",") if repos else None
+    controller.do_command(task, repo_list, max_workers, verbose)
