@@ -20,7 +20,12 @@ def test_freeze_snapshot():
 
 
 def test_services():
-    assert FreezeSvc().create_freeze("v1") == "TODO: create freeze for v1"
+    # FreezeSvc now requires repos parameter and returns FreezeSnapshot
+    from src.domain.repo import Repo
+    freeze_svc = FreezeSvc()
+    repos = [Repo(name="test-repo", path=".")]
+    result = freeze_svc.create_freeze(repos, "v1")
+    assert isinstance(result, FreezeSnapshot)
     
     # BulkExecSvc now returns CommandResult objects
     bulk_svc = BulkExecSvc()
