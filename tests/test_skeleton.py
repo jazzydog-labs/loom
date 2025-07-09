@@ -6,6 +6,7 @@ from src.services.repo_status_service import RepoStatusService
 from src.events.event_bus import EventBus
 from src.infra.telemetry import Telemetry
 from src.infra.git_cache import GitCache
+from src.infra.git_gateway import GitGateway
 from src.infra.policy_enforcer import PolicyEnforcer
 from src.infra.secrets_manager import SecretsManager
 from src.infra.concurrency_controller import ConcurrencyController
@@ -58,6 +59,15 @@ def test_event_bus():
 def test_cross_cutting():
     assert Telemetry().log("msg") == "TODO: log msg"
     assert GitCache().get("repo") == "TODO: cached data for repo"
+    
+    # GitGateway now returns a dict with command results
+    from unittest.mock import patch
+    with patch.object(GitGateway, '_find_git_executable', return_value='/usr/bin/git'):
+        git_gateway = GitGateway()
+    result = git_gateway.run(['--version'], check=False)
+    assert isinstance(result, dict)
+    assert 'command' in result
+    
     assert PolicyEnforcer().check("cmd") == "TODO: check policy for cmd"
     assert SecretsManager().load() == "TODO: load secrets"
     assert ConcurrencyController().run_limited(lambda: None) == "TODO: run with concurrency limits"

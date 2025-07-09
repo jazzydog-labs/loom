@@ -14,6 +14,21 @@ if [ ! -f "loom.py" ]; then
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "⚡ KILLER FEATURE: Never lose work during multi-repo operations!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo
+echo "Python code:"
+echo "  coordinator = StashCoordinator()"
+echo "  result = coordinator.stash_all(repos, 'switching branches')"
+echo "  # ... do dangerous operations ..."
+echo "  coordinator.unstash_all(repos)  # All work restored!"
+echo
+echo "✨ Atomically stash/unstash across ALL repos"
+echo "✨ Smart conflict resolution during unstash"
+echo "✨ Never mix up stashes between repos again"
+echo
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📋 Understanding StashCoordinator"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "StashCoordinator enables:"

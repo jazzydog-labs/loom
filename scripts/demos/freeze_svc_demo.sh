@@ -14,6 +14,21 @@ if [ ! -f "loom.py" ]; then
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "⚡ KILLER FEATURE: Time travel for your entire codebase!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo
+echo "Python code:"
+echo "  freeze_svc = FreezeSvc()"
+echo "  snapshot = freeze_svc.create_freeze(repos, 'before-experiment')"
+echo "  # ... run risky experiments across 10 repos ..."
+echo "  freeze_svc.checkout(snapshot, repos)  # Instant restore!"
+echo
+echo "✨ Atomically save & restore state across ALL your repos"
+echo "✨ Perfect for experiments, demos, and testing"
+echo "✨ Never lose work or break your multi-repo setup again"
+echo
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📋 Understanding FreezeSvc"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "FreezeSvc allows you to:"

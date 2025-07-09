@@ -14,6 +14,19 @@ if [ ! -f "loom.py" ]; then
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "⚡ KILLER FEATURE: Instant health check across all repos!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo
+echo "Command:"
+echo "  loom exec '<health-check-command>' --workers 8"
+echo
+echo "✨ Security scanning across all repos"
+echo "✨ Code quality metrics in seconds"
+echo "✨ Dependency analysis at scale"
+echo "✨ Identify issues before they become problems"
+echo
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔒 Security: Checking for exposed secrets patterns"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 python3 loom.py exec 'grep -r "password\|secret\|api_key\|token" --include="*.py" --include="*.js" --include="*.env*" . 2>/dev/null | grep -v ".git" | wc -l | xargs -I {} echo "{} potential secret references"' --workers 4

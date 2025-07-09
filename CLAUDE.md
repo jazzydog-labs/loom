@@ -95,3 +95,23 @@ Be a good citizen and fix failing tests, even if they're not your responsibility
 2. Fix the test if it's a simple issue
 3. Ensure all tests pass before committing
 4. Include the fix in your commit with a note about being a good citizen
+
+## Demo Guidelines
+
+When creating demos, ALWAYS start with a "killer feature" that is:
+- **Concise**: Show the most impressive capability in 2-3 lines of code
+- **Attention-grabbing**: Demonstrate immediate value
+- **To the point**: No setup, just the wow factor
+- **Practical**: Show why users should care
+
+Example format:
+```python
+def demo_killer_feature():
+    """The ONE thing that makes this feature amazing."""
+    print("=== KILLER FEATURE: Transform any idea into 10 refined versions in seconds ===")
+    idea = Idea.create("Basic concept", score=5.0)
+    best_version = idea.auto_refine(iterations=10).get_best_version()
+    print(f"Original score: 5.0 → Best score: {best_version.score} (+{best_version.score - 5.0} improvement!)")
+```
+
+Then proceed with the detailed demo sections.

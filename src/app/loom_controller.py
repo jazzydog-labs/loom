@@ -172,8 +172,14 @@ class LoomController(LegacyController):
     def just_command(self, recipe: str, repo_names: Optional[List[str]] = None,
                      max_workers: int = 8, verbose: bool = False) -> None:
         """Run a just recipe across repositories with single-line output."""
-        # Map common tasks to their commands
-        command = f"just {recipe}"
+        # Map common recipes to their silent versions if available
+        recipe_mappings = {
+            "test": "test-silent"  # When user runs 'loom just test', use 'test-silent' if it exists
+        }
+        
+        # Check if we should use a mapped recipe
+        actual_recipe = recipe_mappings.get(recipe, recipe)
+        command = f"just {actual_recipe}"
         
         # Get repository configuration
         repos_config = self.config.load_repos()
@@ -212,8 +218,11 @@ class LoomController(LegacyController):
         # Display what we're about to do
         self.console.print(f"\n[bold]Running recipe '{recipe}' across {len(repo_objects)} repositories:[/bold]")
         self.console.print(f"[cyan]Command:[/cyan] {command}")
+        if recipe != actual_recipe:
+            self.console.print(f"[cyan]Note:[/cyan] Using '{actual_recipe}' recipe for single-line output")
         self.console.print(f"[cyan]Mode:[/cyan] {'Verbose (all output)' if verbose else 'Single-line output'}")
-        self.console.print(f"[cyan]Workers:[/cyan] {max_workers}\n")
+        self.console.print(f"[cyan]Workers:[/cyan] {max_workers}")
+        self.console.print(f"\n[dim]💡 Tip: Each repository needs a justfile with the '{actual_recipe}' recipe[/dim]\n")
         
         # Execute with progress indication
         with self.console.status(f"[bold green]Running '{command}' in parallel..."):
@@ -222,7 +231,7 @@ class LoomController(LegacyController):
             )
         
         # Display results
-        self._display_just_results(results, recipe, verbose)
+        self._display_just_results(results, actual_recipe, verbose)
     
     def _display_just_results(self, results: dict, recipe: str, verbose: bool) -> None:
         """Display the results of 'just' command execution with single-line output."""
@@ -290,9 +299,22 @@ class LoomController(LegacyController):
                     else:
                         self.console.print(f"[red]{repo_name}[/red]: {result.stderr.strip().split(chr(10))[0] if result.stderr else 'failed'}")
                 else:
-                    # Success - show first line of output or success indicator
+                    # Success - check output for test results
                     if result.stdout:
                         first_line = result.stdout.strip().split('\n')[0]
-                        self.console.print(f"[green]{repo_name}[/green]: {first_line}")
+                        
+                        # For test recipes, check if tests passed with coverage
+                        if recipe in ['test', 'test-silent']:
+                            # Check for successful test patterns with coverage
+                            if ('passed' in first_line and 'Coverage:' in first_line and 
+                                'failed' not in first_line and 'error' not in first_line):
+                                # Tests passed with coverage - show in green
+                                self.console.print(f"[green]{repo_name}: {first_line}[/green]")
+                            else:
+                                # Tests didn't fully pass or no coverage - show normally
+                                self.console.print(f"{repo_name}: {first_line}")
+                        else:
+                            # Non-test recipes - show repo in green
+                            self.console.print(f"[green]{repo_name}[/green]: {first_line}")
                     else:
                         self.console.print(f"[green]{repo_name}[/green]: ✓")

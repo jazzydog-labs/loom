@@ -1,3 +1,8 @@
+# List all available recipes (default command)
+default:
+	@just --list
+
+# Run tests
 test:
 	pytest -q
 
@@ -23,3 +28,33 @@ demo:
 	done
 	
 	echo "🎉 All demos complete!"
+
+# Demo: Bulk command execution across multiple repositories
+demo-bulk-exec:
+	@echo "🚀 Running BulkExecSvc demo - Execute commands across multiple repos"
+	@bash scripts/demos/bulk_exec_demo.sh
+
+# Demo: Freeze snapshots for repository state management
+demo-freeze:
+	@echo "❄️ Running FreezeSvc demo - Create and restore repository snapshots"
+	@bash scripts/demos/freeze_svc_demo.sh
+
+# Demo: Robust Git command execution with retry logic
+demo-git-gateway:
+	@echo "🔧 Running GitGateway demo - Robust Git operations with retries"
+	@bash scripts/demos/git_gateway_demo.sh
+
+# Demo: Run just recipes across multiple repositories
+demo-just:
+	@echo "📦 Running Just command demo - Execute just recipes across repos"
+	@bash scripts/demos/just_command_demo.sh
+
+# Demo: Repository health monitoring and reporting
+demo-health:
+	@echo "🏥 Running Repository Health Check demo - Monitor repo status"
+	@bash scripts/demos/repo_health_check.sh
+
+# Demo: Coordinated stash management across repositories
+demo-stash:
+	@echo "📚 Running StashCoordinator demo - Manage stashes across repos"
+	@bash scripts/demos/stash_coordinator_demo.sh

@@ -14,6 +14,19 @@ if [ ! -f "loom.py" ]; then
 fi
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "⚡ KILLER FEATURE: Run any just recipe across all repos instantly!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo
+echo "Command:"
+echo "  loom just test"
+echo
+echo "✨ Clean single-line output per repo"
+echo "✨ Runs in parallel across all repos"
+echo "✨ Gracefully handles missing justfiles"
+echo "✨ Perfect for CI/CD and local development"
+echo
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "📋 Checking which repositories have a 'just test' command"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "First, let's see which repos have a justfile with a test recipe..."
