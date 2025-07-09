@@ -8,6 +8,7 @@ from src.infra.telemetry import Telemetry
 from src.infra.git_cache import GitCache
 from src.infra.git_gateway import GitGateway
 from src.infra.fs_gateway import FSGateway
+from src.infra.shell_gateway import ShellGateway
 from src.infra.policy_enforcer import PolicyEnforcer
 from src.infra.secrets_manager import SecretsManager
 from src.infra.concurrency_controller import ConcurrencyController
@@ -75,6 +76,15 @@ def test_cross_cutting():
     assert hasattr(fs_gateway, 'read_text')
     assert hasattr(fs_gateway, 'write_text')
     assert hasattr(fs_gateway, 'exists')
+    
+    # ShellGateway provides secure shell command execution
+    shell_gateway = ShellGateway()
+    result = shell_gateway.execute("echo test")
+    assert hasattr(result, 'success')
+    assert hasattr(result, 'stdout')
+    assert hasattr(result, 'stderr')
+    assert result.success is True
+    assert "test" in result.stdout
     
     assert PolicyEnforcer().check("cmd") == "TODO: check policy for cmd"
     assert SecretsManager().load() == "TODO: load secrets"

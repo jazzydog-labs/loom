@@ -63,3 +63,8 @@ demo-stash:
 demo-fs:
 	@echo "📁 Running FSGateway demo - Safe file operations with permissions"
 	@bash scripts/demos/fs_gateway_demo.sh
+
+# Demo: Secure shell command execution with concurrency control
+demo-shell:
+	@echo "⚡ Running ShellGateway demo - Secure shell execution with concurrency"
+	@bash scripts/demos/shell_gateway_demo.sh
