@@ -1,0 +1,92 @@
+{
+  "success": true,
+  "summary": {
+    "total": 150,
+    "passed": 147,
+    "failed": 2,
+    "skipped": 1,
+    "errors": 0
+  },
+  "coverage": {
+    "percentage": 92.5,
+    "lines": {
+      "covered": 2850,
+      "total": 3081,
+      "missing": 231
+    },
+    "files": [
+      {
+        "path": "src/core/engine.py",
+        "percentage": 98.5,
+        "lines_covered": 256,
+        "lines_total": 260
+      },
+      {
+        "path": "src/utils/helpers.py",
+        "percentage": 85.0,
+        "lines_covered": 170,
+        "lines_total": 200
+      }
+    ]
+  },
+  "duration": 23.45,
+  "timestamp": "2024-01-09T15:30:00.123456+00:00",
+  "environment": {
+    "python_version": "3.11.5",
+    "platform": "Linux",
+    "runner": "pytest",
+    "runner_version": "7.4.3",
+    "ci": true,
+    "ci_provider": "GitHub Actions"
+  },
+  "repository": {
+    "name": "example-service",
+    "path": "/home/runner/work/example-service",
+    "commit": "a1b2c3d4e5f6789012345678901234567890abcd",
+    "branch": "main",
+    "dirty": false
+  },
+  "failures": [
+    {
+      "test_id": "tests/test_api.py::TestAPI::test_authentication",
+      "name": "TestAPI::test_authentication",
+      "file": "tests/test_api.py",
+      "line": 45,
+      "message": "AssertionError: Expected status code 200, got 401",
+      "type": "assertion",
+      "duration": 0.125
+    },
+    {
+      "test_id": "tests/test_database.py::test_connection_timeout",
+      "name": "test_connection_timeout",
+      "file": "tests/test_database.py",
+      "line": 78,
+      "message": "TimeoutError: Database connection timed out after 5 seconds",
+      "type": "error",
+      "traceback": "Traceback (most recent call last):\n  File \"tests/test_database.py\", line 78, in test_connection_timeout\n    db.connect(timeout=5)\nTimeoutError: Database connection timed out after 5 seconds",
+      "duration": 5.023
+    }
+  ],
+  "skipped": [
+    {
+      "test_id": "tests/test_integration.py::test_external_api",
+      "name": "test_external_api",
+      "reason": "External API not available in test environment"
+    }
+  ],
+  "warnings": [
+    {
+      "category": "DeprecationWarning",
+      "message": "datetime.utcnow() is deprecated, use datetime.now(timezone.utc)",
+      "file": "src/utils/time_helpers.py",
+      "line": 23
+    }
+  ],
+  "metadata": {
+    "tags": ["unit", "integration"],
+    "markers": ["slow", "database"],
+    "config_file": "pytest.ini",
+    "test_paths": ["tests/"],
+    "plugins": ["pytest-cov", "pytest-timeout", "pytest-mock"]
+  }
+}
