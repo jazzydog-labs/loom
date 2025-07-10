@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 
 from src.app.json_action_router import ActionHandler, ActionResult
 from src.services.repo_status_service import RepoStatusService
-from src.app.loom_app import LoomApp
+from src.app.repo_utils import resolve_repos
 
 
 class RepoStatusHandler(ActionHandler):
@@ -45,8 +45,7 @@ class RepoStatusHandler(ActionHandler):
             include = payload.get("include", ["branch", "status"])
             
             # Get repos
-            app = LoomApp()
-            repos = app._resolve_repos(repo_patterns)
+            repos = resolve_repos(repo_patterns)
             
             if not repos:
                 return ActionResult(
@@ -151,8 +150,7 @@ class RepoHealthHandler(ActionHandler):
             thresholds = payload.get("thresholds", {})
             
             # Get repos
-            app = LoomApp()
-            repos = app._resolve_repos(repo_patterns)
+            repos = resolve_repos(repo_patterns)
             
             if not repos:
                 return ActionResult(

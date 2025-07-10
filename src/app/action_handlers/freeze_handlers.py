@@ -5,7 +5,7 @@ from pathlib import Path
 from src.app.json_action_router import ActionHandler, ActionResult
 from src.services.freeze_svc import FreezeSvc
 from src.domain.repo import Repo
-from src.app.loom_app import LoomApp
+from src.app.repo_utils import resolve_repos
 
 
 class FreezeCreateHandler(ActionHandler):
@@ -59,8 +59,7 @@ class FreezeCreateHandler(ActionHandler):
             tags = payload.get("tags", [])
             
             # Get repos
-            app = LoomApp()
-            repos = app._resolve_repos(repo_patterns)
+            repos = resolve_repos(repo_patterns)
             
             if not repos:
                 return ActionResult(
@@ -138,8 +137,7 @@ class FreezeRestoreHandler(ActionHandler):
             # Get repos if specified
             repos = None
             if repo_patterns:
-                app = LoomApp()
-                repos = app._resolve_repos(repo_patterns)
+                repos = resolve_repos(repo_patterns)
                 if not repos and not partial:
                     return ActionResult(
                         success=False,

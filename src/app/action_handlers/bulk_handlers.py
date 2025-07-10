@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 
 from src.app.json_action_router import ActionHandler, ActionResult
 from src.services.bulk_exec_svc import BulkExecSvc
-from src.app.loom_app import LoomApp
+from src.app.repo_utils import resolve_repos
 
 
 class BulkExecuteHandler(ActionHandler):
@@ -64,8 +64,7 @@ class BulkExecuteHandler(ActionHandler):
             env = payload.get("env", {})
             
             # Get repos
-            app = LoomApp()
-            repos = app._resolve_repos(repo_patterns)
+            repos = resolve_repos(repo_patterns)
             
             if not repos:
                 return ActionResult(

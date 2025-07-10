@@ -3,7 +3,7 @@ from typing import Dict, Any, Optional
 
 from src.app.json_action_router import ActionHandler, ActionResult
 from src.services.stash_coordinator import StashCoordinator
-from src.app.loom_app import LoomApp
+from src.app.repo_utils import resolve_repos
 
 
 class StashSaveHandler(ActionHandler):
@@ -41,8 +41,7 @@ class StashSaveHandler(ActionHandler):
             include_untracked = payload.get("include_untracked", True)
             
             # Get repos
-            app = LoomApp()
-            repos = app._resolve_repos(repo_patterns)
+            repos = resolve_repos(repo_patterns)
             
             if not repos:
                 return ActionResult(
@@ -117,8 +116,7 @@ class StashRestoreHandler(ActionHandler):
             apply_only = payload.get("apply", False)
             
             # Get repos
-            app = LoomApp()
-            repos = app._resolve_repos(repo_patterns)
+            repos = resolve_repos(repo_patterns)
             
             if not repos:
                 return ActionResult(
@@ -186,8 +184,7 @@ class StashListHandler(ActionHandler):
             verbose = payload.get("verbose", False)
             
             # Get repos
-            app = LoomApp()
-            repos = app._resolve_repos(repo_patterns)
+            repos = resolve_repos(repo_patterns)
             
             if not repos:
                 return ActionResult(

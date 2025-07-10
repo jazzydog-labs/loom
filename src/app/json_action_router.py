@@ -4,7 +4,7 @@ import logging
 from typing import Dict, Any, Optional, Type, Callable, Union
 from pathlib import Path
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from abc import ABC, abstractmethod
 
@@ -32,7 +32,7 @@ class ActionResult:
         """Convert to dictionary for JSON serialization."""
         result = {
             "success": self.success,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         if self.data is not None:
@@ -205,7 +205,7 @@ class JsonActionRouter:
         if "request_id" not in metadata:
             metadata["request_id"] = str(uuid.uuid4())
         if "timestamp" not in metadata:
-            metadata["timestamp"] = datetime.utcnow().isoformat() + "Z"
+            metadata["timestamp"] = datetime.now(timezone.utc).isoformat()
         
         try:
             # Validate base structure
@@ -249,7 +249,7 @@ class JsonActionRouter:
             result.metadata.update({
                 "action": action_name,
                 "request_id": metadata["request_id"],
-                "duration": (datetime.utcnow() - datetime.fromisoformat(metadata["timestamp"].rstrip("Z"))).total_seconds()
+                "duration": (datetime.now(timezone.utc) - datetime.fromisoformat(metadata["timestamp"])).total_seconds()
             })
             
             return result
