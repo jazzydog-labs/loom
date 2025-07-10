@@ -1,0 +1,21 @@
+{
+  "action": "bulk.execute",
+  "version": "1.0",
+  "payload": {
+    "command": "git pull origin main",
+    "repos": ["*"],
+    "parallel": true,
+    "continue_on_error": true,
+    "timeout": 300
+  },
+  "metadata": {
+    "request_id": "bulk-001-pull-all",
+    "timestamp": "2024-01-09T11:00:00Z",
+    "source": "ci",
+    "user": "ci-bot@example.com",
+    "tags": {
+      "operation": "sync",
+      "schedule": "daily"
+    }
+  }
+}

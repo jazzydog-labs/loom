@@ -68,3 +68,8 @@ demo-fs:
 demo-shell:
 	@echo "⚡ Running ShellGateway demo - Secure shell execution with concurrency"
 	@bash scripts/demos/shell_gateway_demo.sh
+
+# Demo: JSON Action Router for unified Loom interface
+demo-json:
+	@echo "🎯 Running JSON Action Router demo - Unified JSON interface"
+	@bash scripts/demos/json_action_router_demo.sh

@@ -1,0 +1,53 @@
+{
+  "action": "pipeline",
+  "version": "1.0",
+  "payload": {
+    "actions": [
+      {
+        "action": "stash.save",
+        "version": "1.0",
+        "payload": {
+          "repos": ["*"],
+          "message": "Before system update"
+        }
+      },
+      {
+        "action": "bulk.execute",
+        "version": "1.0",
+        "payload": {
+          "command": "git pull origin main",
+          "repos": ["*"],
+          "parallel": true
+        }
+      },
+      {
+        "action": "just.run",
+        "version": "1.0",
+        "payload": {
+          "recipe": "test",
+          "repos": ["*"],
+          "parallel": true
+        }
+      },
+      {
+        "action": "repo.health",
+        "version": "1.0",
+        "payload": {
+          "repos": ["*"],
+          "checks": ["uncommitted_changes", "unpushed_commits"]
+        }
+      }
+    ],
+    "stop_on_error": true
+  },
+  "metadata": {
+    "request_id": "pipeline-update-001",
+    "timestamp": "2024-01-09T12:00:00Z",
+    "source": "scheduler",
+    "correlation_id": "weekly-update-2024-02",
+    "tags": {
+      "workflow": "update-and-test",
+      "environment": "development"
+    }
+  }
+}
