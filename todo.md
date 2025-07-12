@@ -30,3 +30,5 @@
 - [ ] Plugin registry for repo-specific actions
 - [ ] Unit of Work pattern across services
 - [ ] Persistent freeze snapshots for time-travel
+
+
